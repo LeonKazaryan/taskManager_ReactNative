@@ -76,6 +76,7 @@ export default function TaskDetailsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { tasks, deleteTask, setStatus } = useTaskStore();
   const [menuVisible, setMenuVisible] = React.useState(false);
+  const [menuKey, setMenuKey] = React.useState(0);
 
   const task = tasks.find((t) => t.id === id);
 
@@ -121,6 +122,8 @@ export default function TaskDetailsScreen() {
   const handleStatusChange = (newStatus: TaskStatus) => {
     setStatus(task.id, newStatus);
     setMenuVisible(false);
+    // Force menu re-render
+    setMenuKey((prev) => prev + 1);
   };
 
   return (
@@ -180,6 +183,7 @@ export default function TaskDetailsScreen() {
 
           <View style={styles.actions}>
             <Menu
+              key={menuKey}
               visible={menuVisible}
               onDismiss={() => setMenuVisible(false)}
               anchor={

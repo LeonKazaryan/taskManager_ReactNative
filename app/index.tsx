@@ -76,6 +76,7 @@ const TaskCard = ({ task }: { task: Task }) => {
   const router = useRouter();
   const { setStatus } = useTaskStore();
   const [menuVisible, setMenuVisible] = React.useState(false);
+  const [menuKey, setMenuKey] = React.useState(0);
 
   const formatDateTime = (dateTime: string) => {
     const date = new Date(dateTime);
@@ -90,6 +91,8 @@ const TaskCard = ({ task }: { task: Task }) => {
   const handleStatusChange = (newStatus: TaskStatus) => {
     setStatus(task.id, newStatus);
     setMenuVisible(false);
+    // Force menu re-render
+    setMenuKey((prev) => prev + 1);
   };
 
   return (
@@ -113,6 +116,7 @@ const TaskCard = ({ task }: { task: Task }) => {
             </View>
 
             <Menu
+              key={menuKey}
               visible={menuVisible}
               onDismiss={() => setMenuVisible(false)}
               anchor={
@@ -216,6 +220,7 @@ export default function TaskListScreen() {
   const { getSortedTasks, setSortOrder, sortOrder } = useTaskStore();
   const tasks = getSortedTasks();
   const [sortMenuVisible, setSortMenuVisible] = React.useState(false);
+  const [menuKey, setMenuKey] = React.useState(0);
 
   const sortOptions = [
     { key: "dateAdded_desc", label: "Newest First" },
@@ -226,6 +231,17 @@ export default function TaskListScreen() {
   const currentSortLabel =
     sortOptions.find((opt) => opt.key === sortOrder)?.label || "Sort";
 
+  const handleSortChange = (optionKey: string) => {
+    setSortOrder(optionKey as any);
+    setSortMenuVisible(false);
+    // Force menu re-render
+    setMenuKey((prev) => prev + 1);
+  };
+
+  const openSortMenu = () => {
+    setSortMenuVisible(true);
+  };
+
   return (
     <View style={styles.container}>
       <Surface style={styles.header} elevation={2}>
@@ -234,12 +250,13 @@ export default function TaskListScreen() {
             Tasks
           </Text>
           <Menu
+            key={menuKey}
             visible={sortMenuVisible}
             onDismiss={() => setSortMenuVisible(false)}
             anchor={
               <Button
                 mode="outlined"
-                onPress={() => setSortMenuVisible(true)}
+                onPress={openSortMenu}
                 icon="sort"
                 style={styles.sortButton}
                 textColor="#6366f1"
@@ -251,10 +268,7 @@ export default function TaskListScreen() {
             {sortOptions.map((option) => (
               <Menu.Item
                 key={option.key}
-                onPress={() => {
-                  setSortOrder(option.key as any);
-                  setSortMenuVisible(false);
-                }}
+                onPress={() => handleSortChange(option.key)}
                 title={option.label}
               />
             ))}
