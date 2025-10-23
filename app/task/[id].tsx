@@ -1,47 +1,72 @@
 import React from "react";
 import { View, StyleSheet, ScrollView, Alert } from "react-native";
-import { Card, Title, Paragraph, Button, Chip, Menu } from "react-native-paper";
+import {
+  Card,
+  Title,
+  Paragraph,
+  Button,
+  Chip,
+  Menu,
+  Surface,
+  Text,
+  Divider,
+} from "react-native-paper";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useTaskStore } from "../../lib/store";
 import { TaskStatus } from "../../lib/types";
 
 const StatusChip = ({ status }: { status: TaskStatus }) => {
-  const getStatusColor = (status: TaskStatus) => {
+  const getStatusConfig = (status: TaskStatus) => {
     switch (status) {
       case "todo":
-        return "#ff9800";
+        return {
+          color: "#6366f1",
+          backgroundColor: "#eef2ff",
+          label: "To Do",
+        };
       case "in_progress":
-        return "#2196f3";
+        return {
+          color: "#f59e0b",
+          backgroundColor: "#fef3c7",
+          label: "In Progress",
+        };
       case "completed":
-        return "#4caf50";
+        return {
+          color: "#10b981",
+          backgroundColor: "#d1fae5",
+          label: "Completed",
+        };
       case "cancelled":
-        return "#f44336";
+        return {
+          color: "#ef4444",
+          backgroundColor: "#fee2e2",
+          label: "Cancelled",
+        };
       default:
-        return "#9e9e9e";
+        return {
+          color: "#6b7280",
+          backgroundColor: "#f3f4f6",
+          label: status,
+        };
     }
   };
 
-  const getStatusLabel = (status: TaskStatus) => {
-    switch (status) {
-      case "todo":
-        return "To Do";
-      case "in_progress":
-        return "In Progress";
-      case "completed":
-        return "Completed";
-      case "cancelled":
-        return "Cancelled";
-      default:
-        return status;
-    }
-  };
+  const config = getStatusConfig(status);
 
   return (
     <Chip
-      style={{ backgroundColor: getStatusColor(status) }}
-      textStyle={{ color: "white" }}
+      style={{
+        backgroundColor: config.backgroundColor,
+        borderWidth: 1,
+        borderColor: config.color,
+      }}
+      textStyle={{
+        color: config.color,
+        fontWeight: "600",
+        fontSize: 14,
+      }}
     >
-      {getStatusLabel(status)}
+      {config.label}
     </Chip>
   );
 };
@@ -69,11 +94,14 @@ export default function TaskDetailsScreen() {
 
   const formatDateTime = (dateTime: string) => {
     const date = new Date(dateTime);
-    return (
-      date.toLocaleDateString() +
-      " " +
-      date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-    );
+    return date.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   const handleDelete = () => {
@@ -96,40 +124,58 @@ export default function TaskDetailsScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Card style={styles.card}>
-        <Card.Content>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <Surface style={styles.card} elevation={1}>
+        <View style={styles.content}>
           <View style={styles.header}>
-            <Title style={styles.title}>{task.title}</Title>
+            <Text variant="headlineSmall" style={styles.title}>
+              {task.title}
+            </Text>
             <StatusChip status={task.status} />
           </View>
 
           {task.description && (
             <View style={styles.section}>
-              <Title style={styles.sectionTitle}>Description</Title>
-              <Paragraph style={styles.description}>
+              <Text variant="titleMedium" style={styles.sectionTitle}>
+                Description
+              </Text>
+              <Text variant="bodyLarge" style={styles.description}>
                 {task.description}
-              </Paragraph>
+              </Text>
             </View>
           )}
 
-          <View style={styles.section}>
-            <Title style={styles.sectionTitle}>Date & Time</Title>
-            <Paragraph style={styles.info}>
-              📅 {formatDateTime(task.datetime)}
-            </Paragraph>
-          </View>
+          <Divider style={styles.divider} />
 
           <View style={styles.section}>
-            <Title style={styles.sectionTitle}>Location</Title>
-            <Paragraph style={styles.info}>📍 {task.location}</Paragraph>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Due Date & Time
+            </Text>
+            <Text variant="bodyLarge" style={styles.info}>
+              {formatDateTime(task.datetime)}
+            </Text>
           </View>
 
+          <Divider style={styles.divider} />
+
           <View style={styles.section}>
-            <Title style={styles.sectionTitle}>Created</Title>
-            <Paragraph style={styles.info}>
-              🕒 {formatDateTime(task.createdAt)}
-            </Paragraph>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Location
+            </Text>
+            <Text variant="bodyLarge" style={styles.info}>
+              {task.location}
+            </Text>
+          </View>
+
+          <Divider style={styles.divider} />
+
+          <View style={styles.section}>
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Created
+            </Text>
+            <Text variant="bodyLarge" style={styles.info}>
+              {formatDateTime(task.createdAt)}
+            </Text>
           </View>
 
           <View style={styles.actions}>
@@ -142,6 +188,7 @@ export default function TaskDetailsScreen() {
                   onPress={() => setMenuVisible(true)}
                   style={styles.actionButton}
                   icon="update"
+                  textColor="#6366f1"
                 >
                   Change Status
                 </Button>
@@ -170,6 +217,7 @@ export default function TaskDetailsScreen() {
               onPress={() => router.push(`/edit/${task.id}`)}
               style={styles.actionButton}
               icon="pencil"
+              textColor="#6366f1"
             >
               Edit Task
             </Button>
@@ -179,13 +227,13 @@ export default function TaskDetailsScreen() {
               onPress={handleDelete}
               style={[styles.actionButton, styles.deleteButton]}
               icon="delete"
-              textColor="#f44336"
+              textColor="#ef4444"
             >
               Delete Task
             </Button>
           </View>
-        </Card.Content>
-      </Card>
+        </View>
+      </Surface>
     </ScrollView>
   );
 }
@@ -193,46 +241,59 @@ export default function TaskDetailsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#fafafa",
   },
   card: {
     margin: 16,
-    elevation: 2,
+    borderRadius: 16,
+    backgroundColor: "#ffffff",
+  },
+  content: {
+    padding: 24,
   },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
-    marginBottom: 16,
+    marginBottom: 24,
   },
   title: {
     flex: 1,
-    marginRight: 8,
+    marginRight: 16,
+    fontWeight: "700",
+    color: "#111827",
+    lineHeight: 32,
   },
   section: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   sectionTitle: {
-    fontSize: 16,
+    fontWeight: "600",
+    color: "#374151",
     marginBottom: 8,
-    color: "#6200ea",
   },
   description: {
-    fontSize: 14,
-    lineHeight: 20,
+    color: "#6b7280",
+    lineHeight: 24,
   },
   info: {
-    fontSize: 14,
-    color: "#666",
+    color: "#111827",
+    fontWeight: "500",
+    lineHeight: 24,
+  },
+  divider: {
+    marginVertical: 16,
+    backgroundColor: "#e5e7eb",
   },
   actions: {
     marginTop: 24,
     gap: 12,
   },
   actionButton: {
-    marginBottom: 8,
+    borderRadius: 12,
+    borderColor: "#6366f1",
   },
   deleteButton: {
-    borderColor: "#f44336",
+    borderColor: "#ef4444",
   },
 });

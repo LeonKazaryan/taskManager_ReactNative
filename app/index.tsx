@@ -1,5 +1,5 @@
 import React from "react";
-import { View, FlatList, StyleSheet } from "react-native";
+import { View, FlatList, StyleSheet, ScrollView } from "react-native";
 import {
   FAB,
   Card,
@@ -8,48 +8,66 @@ import {
   Chip,
   Menu,
   Button,
+  Text,
+  Surface,
+  Divider,
 } from "react-native-paper";
 import { useRouter } from "expo-router";
 import { useTaskStore } from "../lib/store";
 import { Task, TaskStatus } from "../lib/types";
 
 const StatusChip = ({ status }: { status: TaskStatus }) => {
-  const getStatusColor = (status: TaskStatus) => {
+  const getStatusConfig = (status: TaskStatus) => {
     switch (status) {
       case "todo":
-        return "#ff9800";
+        return {
+          color: "#6366f1",
+          backgroundColor: "#eef2ff",
+          label: "To Do",
+        };
       case "in_progress":
-        return "#2196f3";
+        return {
+          color: "#f59e0b",
+          backgroundColor: "#fef3c7",
+          label: "In Progress",
+        };
       case "completed":
-        return "#4caf50";
+        return {
+          color: "#10b981",
+          backgroundColor: "#d1fae5",
+          label: "Completed",
+        };
       case "cancelled":
-        return "#f44336";
+        return {
+          color: "#ef4444",
+          backgroundColor: "#fee2e2",
+          label: "Cancelled",
+        };
       default:
-        return "#9e9e9e";
+        return {
+          color: "#6b7280",
+          backgroundColor: "#f3f4f6",
+          label: status,
+        };
     }
   };
 
-  const getStatusLabel = (status: TaskStatus) => {
-    switch (status) {
-      case "todo":
-        return "To Do";
-      case "in_progress":
-        return "In Progress";
-      case "completed":
-        return "Completed";
-      case "cancelled":
-        return "Cancelled";
-      default:
-        return status;
-    }
-  };
+  const config = getStatusConfig(status);
 
   return (
     <Chip
-      style={{ backgroundColor: getStatusColor(status) }}
-      textStyle={{ color: "white" }}
+      style={{
+        backgroundColor: config.backgroundColor,
+        borderWidth: 1,
+        borderColor: config.color,
+      }}
+      textStyle={{
+        color: config.color,
+        fontWeight: "600",
+        fontSize: 12,
+      }}
     >
-      {getStatusLabel(status)}
+      {config.label}
     </Chip>
   );
 };
@@ -61,11 +79,12 @@ const TaskCard = ({ task }: { task: Task }) => {
 
   const formatDateTime = (dateTime: string) => {
     const date = new Date(dateTime);
-    return (
-      date.toLocaleDateString() +
-      " " +
-      date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-    );
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   const handleStatusChange = (newStatus: TaskStatus) => {
@@ -74,71 +93,123 @@ const TaskCard = ({ task }: { task: Task }) => {
   };
 
   return (
-    <Card style={styles.card} onPress={() => router.push(`/task/${task.id}`)}>
-      <Card.Content>
-        <View style={styles.cardHeader}>
-          <Title numberOfLines={2}>{task.title}</Title>
-          <Menu
-            visible={menuVisible}
-            onDismiss={() => setMenuVisible(false)}
-            anchor={
-              <Button
-                mode="outlined"
-                compact
-                onPress={() => setMenuVisible(true)}
+    <Surface style={styles.taskCard} elevation={1}>
+      <Card
+        style={styles.card}
+        onPress={() => router.push(`/task/${task.id}`)}
+        mode="outlined"
+      >
+        <Card.Content style={styles.cardContent}>
+          <View style={styles.cardHeader}>
+            <View style={styles.titleContainer}>
+              <Text
+                variant="titleMedium"
+                style={styles.taskTitle}
+                numberOfLines={2}
               >
-                Status
-              </Button>
-            }
-          >
-            <Menu.Item
-              onPress={() => handleStatusChange("todo")}
-              title="Set To Do"
-            />
-            <Menu.Item
-              onPress={() => handleStatusChange("in_progress")}
-              title="Set In Progress"
-            />
-            <Menu.Item
-              onPress={() => handleStatusChange("completed")}
-              title="Mark Completed"
-            />
-            <Menu.Item
-              onPress={() => handleStatusChange("cancelled")}
-              title="Mark Cancelled"
-            />
-          </Menu>
-        </View>
+                {task.title}
+              </Text>
+              <StatusChip status={task.status} />
+            </View>
 
-        {task.description && (
-          <Paragraph numberOfLines={2} style={styles.description}>
-            {task.description}
-          </Paragraph>
-        )}
+            <Menu
+              visible={menuVisible}
+              onDismiss={() => setMenuVisible(false)}
+              anchor={
+                <Button
+                  mode="text"
+                  compact
+                  onPress={() => setMenuVisible(true)}
+                  icon="chevron-down"
+                  textColor="#6b7280"
+                >
+                  Change
+                </Button>
+              }
+            >
+              <Menu.Item
+                onPress={() => handleStatusChange("todo")}
+                title="Set To Do"
+              />
+              <Menu.Item
+                onPress={() => handleStatusChange("in_progress")}
+                title="Set In Progress"
+              />
+              <Menu.Item
+                onPress={() => handleStatusChange("completed")}
+                title="Mark Completed"
+              />
+              <Menu.Item
+                onPress={() => handleStatusChange("cancelled")}
+                title="Mark Cancelled"
+              />
+            </Menu>
+          </View>
 
-        <View style={styles.cardFooter}>
-          <Paragraph style={styles.datetime}>
-            📅 {formatDateTime(task.datetime)}
-          </Paragraph>
-          <Paragraph style={styles.location}>📍 {task.location}</Paragraph>
-        </View>
+          {task.description && (
+            <Text
+              variant="bodyMedium"
+              style={styles.description}
+              numberOfLines={2}
+            >
+              {task.description}
+            </Text>
+          )}
 
-        <View style={styles.statusContainer}>
-          <StatusChip status={task.status} />
-        </View>
-      </Card.Content>
-    </Card>
+          <View style={styles.taskMeta}>
+            <View style={styles.metaItem}>
+              <Text variant="bodySmall" style={styles.metaLabel}>
+                Due
+              </Text>
+              <Text variant="bodySmall" style={styles.metaValue}>
+                {formatDateTime(task.datetime)}
+              </Text>
+            </View>
+            <View style={styles.metaItem}>
+              <Text variant="bodySmall" style={styles.metaLabel}>
+                Location
+              </Text>
+              <Text
+                variant="bodySmall"
+                style={styles.metaValue}
+                numberOfLines={1}
+              >
+                {task.location}
+              </Text>
+            </View>
+          </View>
+        </Card.Content>
+      </Card>
+    </Surface>
   );
 };
 
-const EmptyState = () => (
-  <View style={styles.emptyContainer}>
-    <Title style={styles.emptyTitle}>No tasks yet</Title>
-    <Paragraph style={styles.emptyText}>
-      Create your first task to get started!
-    </Paragraph>
-  </View>
-);
+const EmptyState = () => {
+  const router = useRouter();
+
+  return (
+    <View style={styles.emptyContainer}>
+      <Surface style={styles.emptyCard} elevation={1}>
+        <View style={styles.emptyContent}>
+          <Text variant="headlineSmall" style={styles.emptyTitle}>
+            No tasks yet
+          </Text>
+          <Text variant="bodyLarge" style={styles.emptyText}>
+            Create your first task to get started
+          </Text>
+          <Button
+            mode="contained"
+            onPress={() => router.push("/new")}
+            style={styles.emptyButton}
+            icon="plus"
+          >
+            Create Task
+          </Button>
+        </View>
+      </Surface>
+    </View>
+  );
+};
 
 export default function TaskListScreen() {
   const router = useRouter();
@@ -147,9 +218,9 @@ export default function TaskListScreen() {
   const [sortMenuVisible, setSortMenuVisible] = React.useState(false);
 
   const sortOptions = [
-    { key: "dateAdded_desc", label: "Date Added (New → Old)" },
-    { key: "dateAdded_asc", label: "Date Added (Old → New)" },
-    { key: "status", label: "Status (Grouped)" },
+    { key: "dateAdded_desc", label: "Newest First" },
+    { key: "dateAdded_asc", label: "Oldest First" },
+    { key: "status", label: "By Status" },
   ];
 
   const currentSortLabel =
@@ -157,32 +228,39 @@ export default function TaskListScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Menu
-          visible={sortMenuVisible}
-          onDismiss={() => setSortMenuVisible(false)}
-          anchor={
-            <Button
-              mode="outlined"
-              onPress={() => setSortMenuVisible(true)}
-              icon="sort"
-            >
-              {currentSortLabel}
-            </Button>
-          }
-        >
-          {sortOptions.map((option) => (
-            <Menu.Item
-              key={option.key}
-              onPress={() => {
-                setSortOrder(option.key as any);
-                setSortMenuVisible(false);
-              }}
-              title={option.label}
-            />
-          ))}
-        </Menu>
-      </View>
+      <Surface style={styles.header} elevation={2}>
+        <View style={styles.headerContent}>
+          <Text variant="headlineSmall" style={styles.headerTitle}>
+            Tasks
+          </Text>
+          <Menu
+            visible={sortMenuVisible}
+            onDismiss={() => setSortMenuVisible(false)}
+            anchor={
+              <Button
+                mode="outlined"
+                onPress={() => setSortMenuVisible(true)}
+                icon="sort"
+                style={styles.sortButton}
+                textColor="#6366f1"
+              >
+                {currentSortLabel}
+              </Button>
+            }
+          >
+            {sortOptions.map((option) => (
+              <Menu.Item
+                key={option.key}
+                onPress={() => {
+                  setSortOrder(option.key as any);
+                  setSortMenuVisible(false);
+                }}
+                title={option.label}
+              />
+            ))}
+          </Menu>
+        </View>
+      </Surface>
 
       {tasks.length === 0 ? (
         <EmptyState />
@@ -192,6 +270,7 @@ export default function TaskListScreen() {
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <TaskCard task={item} />}
           contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
         />
       )}
 
@@ -199,7 +278,8 @@ export default function TaskListScreen() {
         style={styles.fab}
         icon="plus"
         onPress={() => router.push("/new")}
-        label="Add Task"
+        label="New Task"
+        size="large"
       />
     </View>
   );
@@ -208,52 +288,88 @@ export default function TaskListScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#fafafa",
   },
   header: {
-    padding: 16,
-    backgroundColor: "white",
+    backgroundColor: "#ffffff",
     borderBottomWidth: 1,
-    borderBottomColor: "#e0e0e0",
+    borderBottomColor: "#e5e7eb",
+  },
+  headerContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  headerTitle: {
+    fontWeight: "700",
+    color: "#111827",
+  },
+  sortButton: {
+    borderColor: "#6366f1",
   },
   list: {
     padding: 16,
+    paddingBottom: 100,
+  },
+  taskCard: {
+    marginBottom: 12,
+    borderRadius: 12,
+    backgroundColor: "#ffffff",
   },
   card: {
-    marginBottom: 12,
-    elevation: 2,
+    backgroundColor: "transparent",
+    borderRadius: 12,
+  },
+  cardContent: {
+    padding: 20,
   },
   cardHeader: {
+    marginBottom: 12,
+  },
+  titleContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "flex-start",
     marginBottom: 8,
   },
+  taskTitle: {
+    flex: 1,
+    marginRight: 12,
+    fontWeight: "600",
+    color: "#111827",
+    lineHeight: 22,
+  },
   description: {
-    marginBottom: 8,
-    color: "#666",
+    color: "#6b7280",
+    lineHeight: 20,
+    marginBottom: 16,
   },
-  cardFooter: {
-    marginBottom: 8,
+  taskMeta: {
+    flexDirection: "row",
+    justifyContent: "space-between",
   },
-  datetime: {
-    fontSize: 12,
-    color: "#666",
-    marginBottom: 4,
+  metaItem: {
+    flex: 1,
+    marginRight: 16,
   },
-  location: {
-    fontSize: 12,
-    color: "#666",
+  metaLabel: {
+    color: "#9ca3af",
+    fontWeight: "500",
+    marginBottom: 2,
   },
-  statusContainer: {
-    alignItems: "flex-start",
+  metaValue: {
+    color: "#374151",
+    fontWeight: "500",
   },
   fab: {
     position: "absolute",
-    margin: 16,
+    margin: 20,
     right: 0,
     bottom: 0,
-    backgroundColor: "#6200ea",
+    backgroundColor: "#6366f1",
+    borderRadius: 16,
   },
   emptyContainer: {
     flex: 1,
@@ -261,12 +377,31 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 32,
   },
+  emptyCard: {
+    borderRadius: 16,
+    backgroundColor: "#ffffff",
+    width: "100%",
+    maxWidth: 320,
+  },
+  emptyContent: {
+    padding: 32,
+    alignItems: "center",
+  },
   emptyTitle: {
     marginBottom: 8,
     textAlign: "center",
+    fontWeight: "700",
+    color: "#111827",
   },
   emptyText: {
     textAlign: "center",
-    color: "#666",
+    color: "#6b7280",
+    marginBottom: 24,
+    lineHeight: 24,
+  },
+  emptyButton: {
+    backgroundColor: "#6366f1",
+    borderRadius: 12,
+    paddingHorizontal: 24,
   },
 });

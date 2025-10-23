@@ -1,6 +1,13 @@
 import React from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
-import { Button, TextInput, Card, Title } from "react-native-paper";
+import {
+  Button,
+  TextInput,
+  Card,
+  Title,
+  Surface,
+  Text,
+} from "react-native-paper";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -121,28 +128,34 @@ export default function EditTaskScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Card style={styles.card}>
-        <Card.Content>
-          <Title style={styles.title}>Edit Task</Title>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <Surface style={styles.card} elevation={1}>
+        <View style={styles.content}>
+          <Text variant="headlineSmall" style={styles.title}>
+            Edit Task
+          </Text>
 
           <Controller
             control={control}
             name="title"
             render={({ field: { onChange, onBlur, value } }) => (
               <TextInput
-                label="Title *"
+                label="Title"
                 value={value}
                 onBlur={onBlur}
                 onChangeText={onChange}
                 error={!!errors.title}
                 style={styles.input}
                 mode="outlined"
+                outlineColor="#e5e7eb"
+                activeOutlineColor="#6366f1"
               />
             )}
           />
           {errors.title && (
-            <Title style={styles.errorText}>{errors.title.message}</Title>
+            <Text variant="bodySmall" style={styles.errorText}>
+              {errors.title.message}
+            </Text>
           )}
 
           <Controller
@@ -159,19 +172,27 @@ export default function EditTaskScreen() {
                 mode="outlined"
                 multiline
                 numberOfLines={3}
+                outlineColor="#e5e7eb"
+                activeOutlineColor="#6366f1"
               />
             )}
           />
           {errors.description && (
-            <Title style={styles.errorText}>{errors.description.message}</Title>
+            <Text variant="bodySmall" style={styles.errorText}>
+              {errors.description.message}
+            </Text>
           )}
 
           <View style={styles.datetimeContainer}>
+            <Text variant="bodyMedium" style={styles.label}>
+              Due Date & Time
+            </Text>
             <Button
               mode="outlined"
               onPress={() => setShowDatePicker(true)}
               style={styles.datetimeButton}
               icon="calendar"
+              textColor="#6366f1"
             >
               {formatDateTime(selectedDateTime)}
             </Button>
@@ -186,7 +207,9 @@ export default function EditTaskScreen() {
             )}
           </View>
           {errors.datetime && (
-            <Title style={styles.errorText}>{errors.datetime.message}</Title>
+            <Text variant="bodySmall" style={styles.errorText}>
+              {errors.datetime.message}
+            </Text>
           )}
 
           <Controller
@@ -194,7 +217,7 @@ export default function EditTaskScreen() {
             name="location"
             render={({ field: { onChange, onBlur, value } }) => (
               <TextInput
-                label="Location *"
+                label="Location"
                 value={value}
                 onBlur={onBlur}
                 onChangeText={onChange}
@@ -202,11 +225,15 @@ export default function EditTaskScreen() {
                 style={styles.input}
                 mode="outlined"
                 placeholder="Enter location manually"
+                outlineColor="#e5e7eb"
+                activeOutlineColor="#6366f1"
               />
             )}
           />
           {errors.location && (
-            <Title style={styles.errorText}>{errors.location.message}</Title>
+            <Text variant="bodySmall" style={styles.errorText}>
+              {errors.location.message}
+            </Text>
           )}
 
           <View style={styles.buttonContainer}>
@@ -214,6 +241,7 @@ export default function EditTaskScreen() {
               mode="outlined"
               onPress={() => router.back()}
               style={styles.button}
+              textColor="#6b7280"
             >
               Cancel
             </Button>
@@ -222,12 +250,13 @@ export default function EditTaskScreen() {
               onPress={handleSubmit(onSubmit)}
               disabled={!isValid}
               style={styles.button}
+              buttonColor="#6366f1"
             >
               Save Changes
             </Button>
           </View>
-        </Card.Content>
-      </Card>
+        </View>
+      </Surface>
     </ScrollView>
   );
 }
@@ -235,38 +264,53 @@ export default function EditTaskScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: "#fafafa",
   },
   card: {
     margin: 16,
-    elevation: 2,
+    borderRadius: 16,
+    backgroundColor: "#ffffff",
+  },
+  content: {
+    padding: 24,
   },
   title: {
-    marginBottom: 16,
+    marginBottom: 24,
     textAlign: "center",
+    fontWeight: "700",
+    color: "#111827",
   },
   input: {
     marginBottom: 8,
+    backgroundColor: "#ffffff",
+  },
+  label: {
+    marginBottom: 8,
+    fontWeight: "600",
+    color: "#374151",
   },
   datetimeContainer: {
     marginBottom: 8,
   },
   datetimeButton: {
     marginBottom: 8,
+    borderColor: "#6366f1",
   },
   errorText: {
-    color: "#f44336",
+    color: "#ef4444",
     fontSize: 12,
-    marginBottom: 8,
+    marginBottom: 16,
     marginTop: -4,
+    fontWeight: "500",
   },
   buttonContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginTop: 16,
+    marginTop: 24,
   },
   button: {
     flex: 1,
-    marginHorizontal: 4,
+    marginHorizontal: 6,
+    borderRadius: 12,
   },
 });
