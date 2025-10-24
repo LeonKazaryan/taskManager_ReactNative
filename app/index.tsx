@@ -279,22 +279,23 @@ export default function TaskListScreen() {
       {tasks.length === 0 ? (
         <EmptyState />
       ) : (
-        <FlatList
-          data={tasks}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => <TaskCard task={item} />}
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
-        />
+        <>
+          <FlatList
+            data={tasks}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => <TaskCard task={item} />}
+            contentContainerStyle={styles.list}
+            showsVerticalScrollIndicator={false}
+          />
+          <FAB
+            style={styles.fab}
+            icon="plus"
+            onPress={() => router.push("/new")}
+            label="New Task"
+            size="large"
+          />
+        </>
       )}
-
-      <FAB
-        style={styles.fab}
-        icon="plus"
-        onPress={() => router.push("/new")}
-        label="New Task"
-        size="large"
-      />
     </View>
   );
 }
@@ -389,12 +390,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    padding: 32,
+    padding: 12,
   },
   emptyCard: {
     borderRadius: 16,
     backgroundColor: "#ffffff",
-    width: "100%",
+    width: "75%",
     maxWidth: 320,
   },
   emptyContent: {
