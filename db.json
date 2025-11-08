@@ -1,0 +1,62 @@
+{
+  "tasks": [
+    {
+      "id": "VJNeeb5niVd44cus7n4Ht",
+      "title": "Temp3",
+      "description": "Temp3",
+      "datetime": "2025-11-08T14:25:00.000Z",
+      "location": "Temp3",
+      "createdAt": "2025-11-08T14:24:36.861Z",
+      "status": "todo"
+    },
+    {
+      "id": "hNDq2Xv9AjHBZCVEf_Ahg",
+      "title": "Temp5",
+      "description": "Temp5",
+      "datetime": "2025-11-08T16:42:00.000Z",
+      "location": "Temp5",
+      "createdAt": "2025-11-08T14:42:26.707Z",
+      "status": "todo"
+    },
+    {
+      "id": "RgrFYUGjPKDlqEk0PFSSK",
+      "title": "Go shopping",
+      "description": "Go to the shopping mall",
+      "datetime": "2025-11-08T15:14:00.000Z",
+      "location": "Astana, Tselinograd, Kazakhstan",
+      "coordinates": {
+        "latitude": 51.132400312945464,
+        "longitude": 71.4038372039795
+      },
+      "createdAt": "2025-11-08T14:43:40.250Z",
+      "status": "todo"
+    },
+    {
+      "id": "BfYE7nTG8aQbsMgCEq4Xr",
+      "title": "134",
+      "description": "123",
+      "datetime": "2025-11-11T19:44:00.000Z",
+      "location": "улица Бейбитшилик, Astana, Tselinograd, Kazakhstan",
+      "coordinates": {
+        "latitude": 51.162177233197326,
+        "longitude": 71.42088834612095
+      },
+      "attachments": [
+        {
+          "uri": "file:///var/mobile/Containers/Data/Application/4F63E79F-0E40-4543-9076-D25EF7A32111/Library/Caches/ExponentExperienceData/@leonkazaryan/salesautomators-task-manager/ImagePicker/213F6F89-00B7-4676-9575-304D3D808B26.heic",
+          "name": "IMG_5821.heic",
+          "type": "image/heic",
+          "size": 1769471
+        },
+        {
+          "uri": "file:///var/mobile/Containers/Data/Application/4F63E79F-0E40-4543-9076-D25EF7A32111/Library/Caches/ExponentExperienceData/@leonkazaryan/salesautomators-task-manager/DocumentPicker/6D8DD68F-FC47-4656-BDEE-6D463EF45800.pdf",
+          "name": "Toyota CHr.pdf",
+          "type": "application/pdf",
+          "size": 660945
+        }
+      ],
+      "createdAt": "2025-11-08T14:45:06.024Z",
+      "status": "todo"
+    }
+  ]
+}

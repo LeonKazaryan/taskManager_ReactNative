@@ -269,7 +269,14 @@ const EmptyState = () => {
 export default function TaskListScreen() {
   const router = useRouter();
   const theme = useTheme();
-  const { getSortedTasks, setSortOrder, sortOrder } = useTaskStore();
+  const {
+    getSortedTasks,
+    setSortOrder,
+    sortOrder,
+    pendingSync,
+    syncStatus,
+    syncTasks,
+  } = useTaskStore();
   const { themeMode, toggleTheme } = useThemeStore();
   const tasks = getSortedTasks();
   const [sortMenuVisible, setSortMenuVisible] = React.useState(false);
@@ -309,6 +316,64 @@ export default function TaskListScreen() {
         ]}
         elevation={2}
       >
+        {/* Sync Status Indicator */}
+        {pendingSync.length > 0 && (
+          <View
+            style={[
+              styles.syncIndicator,
+              {
+                backgroundColor:
+                  syncStatus === "syncing"
+                    ? theme.colors.primaryContainer
+                    : syncStatus === "error"
+                    ? theme.colors.errorContainer
+                    : theme.colors.surfaceVariant,
+              },
+            ]}
+          >
+            <View style={styles.syncIndicatorContent}>
+              <Text
+                style={[
+                  styles.syncText,
+                  {
+                    color:
+                      syncStatus === "syncing"
+                        ? theme.colors.onPrimaryContainer
+                        : syncStatus === "error"
+                        ? theme.colors.onErrorContainer
+                        : theme.colors.onSurfaceVariant,
+                  },
+                ]}
+              >
+                {syncStatus === "syncing"
+                  ? `Syncing ${pendingSync.length} task(s)...`
+                  : syncStatus === "error"
+                  ? `Sync failed (${pendingSync.length} pending)`
+                  : `${pendingSync.length} task(s) pending sync`}
+              </Text>
+              {syncStatus !== "syncing" && (
+                <Button
+                  mode="text"
+                  compact
+                  onPress={() => {
+                    console.log("Manual sync triggered");
+                    syncTasks().catch((error) => {
+                      console.error("Manual sync failed:", error);
+                    });
+                  }}
+                  textColor={
+                    syncStatus === "error"
+                      ? theme.colors.onErrorContainer
+                      : theme.colors.onSurfaceVariant
+                  }
+                  style={styles.syncButton}
+                >
+                  Retry
+                </Button>
+              )}
+            </View>
+          </View>
+        )}
         <View style={styles.headerContent}>
           <View style={styles.headerActions}>
             <Button
@@ -423,6 +488,25 @@ const styles = StyleSheet.create({
     alignSelf: "flex-end",
   },
   themeToggle: {
+    marginLeft: 8,
+  },
+  syncIndicator: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(0,0,0,0.1)",
+  },
+  syncIndicatorContent: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  syncText: {
+    fontSize: 12,
+    fontWeight: "500",
+    flex: 1,
+  },
+  syncButton: {
     marginLeft: 8,
   },
   list: {

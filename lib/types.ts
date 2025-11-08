@@ -36,3 +36,17 @@ export type ActionLog = {
     timestamp: string;
     details?: string; // Additional info like old status -> new status
 }
+
+// Sync types
+export type SyncOperationType = 'create' | 'update' | 'delete';
+
+export type SyncOperation = {
+    id: string;
+    type: SyncOperationType;
+    taskId: string;
+    taskData?: Task; // For create/update operations
+    timestamp: string;
+    retries: number;
+}
+
+export type SyncStatus = 'idle' | 'syncing' | 'success' | 'error';

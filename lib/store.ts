@@ -1,15 +1,18 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Task, TaskStatus, SortOrder, ActionLog, ActionType } from './types';
+import { Task, TaskStatus, SortOrder, ActionLog, ActionType, SyncOperation, SyncStatus, SyncOperationType } from './types';
 import { nanoid } from 'nanoid/non-secure';
 import { immer } from 'zustand/middleware/immer';
 import { scheduleTaskNotification, cancelTaskNotification, rescheduleAllTaskNotifications } from './notifications';
+import { syncPendingOperations } from './sync';
 
 type State = {
     tasks: Task[];
     actionLogs: ActionLog[];
     sortOrder: SortOrder;
+    pendingSync: SyncOperation[];
+    syncStatus: SyncStatus;
     addTask: (data: Omit<Task, "id" | "createdAt" | "status">) => void;
     updateTask: (id: string, updates: Partial<Task>) => void;
     deleteTask: (id: string) => void;
@@ -19,6 +22,9 @@ type State = {
     getActionLogs: () => ActionLog[];
     clearActionLogs: () => void;
     initializeNotifications: () => Promise<void>;
+    syncTasks: () => Promise<void>;
+    addSyncOperation: (type: SyncOperationType, taskId: string, taskData?: Task) => void;
+    removeSyncOperation: (operationId: string) => void;
 };
 
 export const useTaskStore = create<State>()(
@@ -27,6 +33,8 @@ export const useTaskStore = create<State>()(
             tasks: [],
             actionLogs: [],
             sortOrder: 'dateAdded_desc',
+            pendingSync: [],
+            syncStatus: 'idle',
             addTask: (data) =>
                 set((state) => {
                     const newTask: Task = {
@@ -50,6 +58,16 @@ export const useTaskStore = create<State>()(
                     // Schedule notification for new task
                     // newTask is already a plain object, so it's safe to pass directly
                     scheduleTaskNotification(newTask).catch(console.error);
+                    
+                    // Add sync operation
+                    state.pendingSync.push({
+                        id: nanoid(),
+                        type: 'create',
+                        taskId: newTask.id,
+                        taskData: newTask,
+                        timestamp: new Date().toISOString(),
+                        retries: 0,
+                    });
                 }),
             updateTask: (id, updates) =>
                 set((state) => {
@@ -88,6 +106,16 @@ export const useTaskStore = create<State>()(
                                 status: updatedTask.status,
                             };
                             scheduleTaskNotification(plainTask).catch(console.error);
+                            
+                            // Add sync operation
+                            state.pendingSync.push({
+                                id: nanoid(),
+                                type: 'update',
+                                taskId: id,
+                                taskData: plainTask,
+                                timestamp: new Date().toISOString(),
+                                retries: 0,
+                            });
                         }
                     }
                 }),
@@ -109,6 +137,15 @@ export const useTaskStore = create<State>()(
                         state.tasks = state.tasks.filter(t => t.id !== id);
                         // Cancel notification for deleted task
                         cancelTaskNotification(id).catch(console.error);
+                        
+                        // Add sync operation
+                        state.pendingSync.push({
+                            id: nanoid(),
+                            type: 'delete',
+                            taskId: id,
+                            timestamp: new Date().toISOString(),
+                            retries: 0,
+                        });
                     }
                 }),
             setStatus: (id, status) =>
@@ -194,6 +231,87 @@ export const useTaskStore = create<State>()(
             initializeNotifications: async () => {
                 const { tasks } = get();
                 await rescheduleAllTaskNotifications(tasks);
+            },
+            addSyncOperation: (type, taskId, taskData) =>
+                set((state) => {
+                    const operation: SyncOperation = {
+                        id: nanoid(),
+                        type,
+                        taskId,
+                        taskData,
+                        timestamp: new Date().toISOString(),
+                        retries: 0,
+                    };
+                    state.pendingSync.push(operation);
+                }),
+            removeSyncOperation: (operationId) =>
+                set((state) => {
+                    state.pendingSync = state.pendingSync.filter(op => op.id !== operationId);
+                }),
+            syncTasks: async () => {
+                const { pendingSync } = get();
+                
+                // Если нет операций для синхронизации, выходим
+                if (pendingSync.length === 0) {
+                    return;
+                }
+
+                // Если уже идет синхронизация, не запускаем еще одну
+                if (get().syncStatus === 'syncing') {
+                    return;
+                }
+
+                set((state) => {
+                    state.syncStatus = 'syncing';
+                });
+
+                try {
+                    await syncPendingOperations(
+                        pendingSync,
+                        // onOperationComplete
+                        (operationId) => {
+                            set((state) => {
+                                state.pendingSync = state.pendingSync.filter(op => op.id !== operationId);
+                            });
+                        },
+                        // onOperationFailed - операция превысила лимит retries
+                        (operationId, error) => {
+                            console.error('Sync operation failed after max retries:', error);
+                            set((state) => {
+                                // Удаляем операцию, так как превышен лимит попыток
+                                state.pendingSync = state.pendingSync.filter(op => op.id !== operationId);
+                            });
+                        },
+                        // onOperationRetry - операция провалилась, но retries < MAX_RETRIES
+                        (operationId) => {
+                            set((state) => {
+                                // Увеличиваем retries для операции, которая останется в очереди
+                                const operation = state.pendingSync.find(op => op.id === operationId);
+                                if (operation) {
+                                    operation.retries += 1;
+                                }
+                            });
+                        }
+                    );
+
+                    set((state) => {
+                        state.syncStatus = 'success';
+                    });
+                } catch (error) {
+                    console.error('Sync failed:', error);
+                    set((state) => {
+                        state.syncStatus = 'error';
+                    });
+                } finally {
+                    // Через 2 секунды сбрасываем статус на idle
+                    setTimeout(() => {
+                        set((state) => {
+                            if (state.syncStatus === 'success' || state.syncStatus === 'error') {
+                                state.syncStatus = 'idle';
+                            }
+                        });
+                    }, 2000);
+                }
             }
         })),
         { 
