@@ -1,5 +1,15 @@
 import React from "react";
-import { View, StyleSheet, ScrollView, Alert, Linking } from "react-native";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  Linking,
+  Image,
+  Modal,
+  TouchableWithoutFeedback,
+  Pressable,
+} from "react-native";
 import {
   Card,
   Title,
@@ -11,10 +21,15 @@ import {
   Text,
   Divider,
   List,
+  IconButton,
 } from "react-native-paper";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useTaskStore } from "../../lib/store";
 import { TaskStatus } from "../../lib/types";
+import * as Sharing from "expo-sharing";
+import * as FileSystem from "expo-file-system/legacy";
+import * as IntentLauncher from "expo-intent-launcher";
+import { Platform } from "react-native";
 
 const StatusChip = ({ status }: { status: TaskStatus }) => {
   const getStatusConfig = (status: TaskStatus) => {
@@ -78,6 +93,10 @@ export default function TaskDetailsScreen() {
   const { tasks, deleteTask, setStatus } = useTaskStore();
   const [menuVisible, setMenuVisible] = React.useState(false);
   const [menuKey, setMenuKey] = React.useState(0);
+  const [imageModalVisible, setImageModalVisible] = React.useState(false);
+  const [selectedImageUri, setSelectedImageUri] = React.useState<string | null>(
+    null
+  );
 
   const task = tasks.find((t) => t.id === id);
 
@@ -125,6 +144,91 @@ export default function TaskDetailsScreen() {
     setMenuVisible(false);
     // Force menu re-render
     setMenuKey((prev) => prev + 1);
+  };
+
+  const handleOpenFile = async (attachment: {
+    uri: string;
+    name: string;
+    type: string;
+  }) => {
+    try {
+      // For images, show in modal
+      if (attachment.type.startsWith("image/")) {
+        setSelectedImageUri(attachment.uri);
+        setImageModalVisible(true);
+        return;
+      }
+
+      // Check if file exists
+      const fileInfo = await FileSystem.getInfoAsync(attachment.uri);
+      if (!fileInfo.exists) {
+        Alert.alert("Error", "File not found");
+        return;
+      }
+
+      // On Android, try to use IntentLauncher with content URI
+      if (Platform.OS === "android") {
+        try {
+          // Try to get content URI (works if file is in app's cache/document directory)
+          let contentUri = attachment.uri;
+
+          // If file is in cache directory, try to get content URI
+          if (
+            attachment.uri.includes("cache") ||
+            attachment.uri.includes("document")
+          ) {
+            try {
+              // @ts-ignore - getContentUriAsync might not be in types but exists in runtime
+              contentUri = await FileSystem.getContentUriAsync(attachment.uri);
+            } catch (e) {
+              // If getContentUriAsync doesn't exist, use original URI
+              console.log(
+                "getContentUriAsync not available, using original URI"
+              );
+            }
+          }
+
+          await IntentLauncher.startActivityAsync(
+            "android.intent.action.VIEW",
+            {
+              data: contentUri,
+              flags: 1, // FLAG_GRANT_READ_URI_PERMISSION
+              type: attachment.type,
+            }
+          );
+          return;
+        } catch (intentError) {
+          console.log("IntentLauncher failed, trying Sharing:", intentError);
+          // Fall through to Sharing
+        }
+      }
+
+      // Use Sharing API (works on both platforms, shows "Open with" dialog)
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (isAvailable) {
+        await Sharing.shareAsync(attachment.uri, {
+          mimeType: attachment.type,
+          dialogTitle: `Open ${attachment.name}`,
+          UTI: attachment.type, // iOS specific
+        });
+      } else {
+        // else try to open with Linking
+        const canOpen = await Linking.canOpenURL(attachment.uri);
+        if (canOpen) {
+          await Linking.openURL(attachment.uri);
+        } else {
+          Alert.alert("Error", "Cannot open this file type on this device");
+        }
+      }
+    } catch (error) {
+      console.error("Error opening file:", error);
+      Alert.alert(
+        "Error",
+        `Could not open file: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
   };
 
   return (
@@ -210,15 +314,15 @@ export default function TaskDetailsScreen() {
                         {...props}
                         mode="text"
                         compact
-                        onPress={() => {
-                          Linking.openURL(attachment.uri).catch(() => {
-                            Alert.alert("Error", "Could not open file");
-                          });
-                        }}
-                        icon="open-in-new"
+                        onPress={() => handleOpenFile(attachment)}
+                        icon={
+                          attachment.type.startsWith("image/")
+                            ? "eye"
+                            : "open-in-new"
+                        }
                         textColor="#6366f1"
                       >
-                        Open
+                        {attachment.type.startsWith("image/") ? "View" : "Open"}
                       </Button>
                     )}
                     style={styles.attachmentItem}
@@ -285,6 +389,38 @@ export default function TaskDetailsScreen() {
           </View>
         </View>
       </Surface>
+
+      <Modal
+        visible={imageModalVisible}
+        transparent={true}
+        onRequestClose={() => setImageModalVisible(false)}
+        animationType="fade"
+      >
+        <View style={styles.imageModalContainer}>
+          <TouchableWithoutFeedback onPress={() => setImageModalVisible(false)}>
+            <View style={styles.imageModalBackdrop} />
+          </TouchableWithoutFeedback>
+          <View style={styles.imageModalContent}>
+            {selectedImageUri && (
+              <Image
+                source={{ uri: selectedImageUri }}
+                style={styles.modalImage}
+                resizeMode="contain"
+              />
+            )}
+            <View style={styles.closeButtonContainer} pointerEvents="box-none">
+              <IconButton
+                icon="close"
+                iconColor="#ffffff"
+                size={32}
+                onPress={() => setImageModalVisible(false)}
+                style={styles.closeIconButton}
+                containerColor="rgba(0, 0, 0, 0.7)"
+              />
+            </View>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -352,5 +488,40 @@ const styles = StyleSheet.create({
     backgroundColor: "#f9fafb",
     borderRadius: 8,
     marginBottom: 8,
+  },
+  imageModalContainer: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.9)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  imageModalBackdrop: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  imageModalContent: {
+    width: "100%",
+    height: "100%",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "relative",
+  },
+  modalImage: {
+    width: "100%",
+    height: "100%",
+  },
+  closeButtonContainer: {
+    position: "absolute",
+    top: 50,
+    right: 20,
+    zIndex: 1000,
+    elevation: 10, // Android shadow
+    pointerEvents: "box-none",
+  },
+  closeIconButton: {
+    margin: 0,
   },
 });
