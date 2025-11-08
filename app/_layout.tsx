@@ -1,6 +1,9 @@
 import { Stack } from "expo-router";
 import { PaperProvider, MD3LightTheme } from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { useEffect } from "react";
+import { useTaskStore } from "../lib/store";
+import { requestNotificationPermissions } from "../lib/notifications";
 
 const theme = {
   ...MD3LightTheme,
@@ -21,6 +24,17 @@ const theme = {
 };
 
 export default function RootLayout() {
+  const { initializeNotifications } = useTaskStore();
+
+  useEffect(() => {
+    // Request notification permissions and initialize notifications on app start
+    const initNotifications = async () => {
+      await requestNotificationPermissions();
+      await initializeNotifications();
+    };
+    initNotifications();
+  }, [initializeNotifications]);
+
   return (
     <SafeAreaProvider>
       <PaperProvider theme={theme}>

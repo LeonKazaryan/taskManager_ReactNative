@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Task, TaskStatus, SortOrder } from './types';
 import { nanoid } from 'nanoid/non-secure';
 import { immer } from 'zustand/middleware/immer';
+import { scheduleTaskNotification, cancelTaskNotification, rescheduleAllTaskNotifications } from './notifications';
 
 type State = {
     tasks: Task[];
@@ -14,6 +15,7 @@ type State = {
     setStatus: (id: string, status: TaskStatus) => void;
     setSortOrder: (order: SortOrder) => void;
     getSortedTasks: () => Task[];
+    initializeNotifications: () => Promise<void>;
 };
 
 export const useTaskStore = create<State>()(
@@ -23,29 +25,46 @@ export const useTaskStore = create<State>()(
             sortOrder: 'dateAdded_desc',
             addTask: (data) =>
                 set((state) => {
-                    state.tasks.push({
+                    const newTask: Task = {
                         ...data,
                         id: nanoid(),
                         createdAt: new Date().toISOString(),
                         status: 'todo'
-                    });
+                    };
+                    state.tasks.push(newTask);
+                    // Schedule notification for new task
+                    scheduleTaskNotification(newTask).catch(console.error);
                 }),
             updateTask: (id, updates) =>
                 set((state) => {
                     const task = state.tasks.find(t => t.id === id);
                     if (task) {
                         Object.assign(task, updates);
+                        // Reschedule notification if task was updated
+                        const updatedTask = state.tasks.find(t => t.id === id);
+                        if (updatedTask) {
+                            scheduleTaskNotification(updatedTask).catch(console.error);
+                        }
                     }
                 }),
             deleteTask: (id) =>
                 set((state) => {
                     state.tasks = state.tasks.filter(t => t.id !== id);
+                    // Cancel notification for deleted task
+                    cancelTaskNotification(id).catch(console.error);
                 }),
             setStatus: (id, status) =>
                 set((state) => {
                     const task = state.tasks.find(t => t.id === id);
                     if (task) {
                         task.status = status;
+                        // Cancel notification if task is completed or cancelled
+                        if (status === 'completed' || status === 'cancelled') {
+                            cancelTaskNotification(id).catch(console.error);
+                        } else {
+                            // Reschedule notification if task becomes active again
+                            scheduleTaskNotification(task).catch(console.error);
+                        }
                     }
                 }),
             setSortOrder: (order) =>
@@ -71,8 +90,15 @@ export const useTaskStore = create<State>()(
                     default:
                         return sorted;
                 }
+            },
+            initializeNotifications: async () => {
+                const { tasks } = get();
+                await rescheduleAllTaskNotifications(tasks);
             }
         })),
-        { name: "tm:tasks:v1", storage: createJSONStorage(() => AsyncStorage) }
+        { 
+            name: "tm:tasks:v1", 
+            storage: createJSONStorage(() => AsyncStorage)
+        }
     )
 );

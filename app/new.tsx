@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, ScrollView, Alert } from "react-native";
+import { View, StyleSheet, ScrollView, Alert, Platform } from "react-native";
 import {
   Button,
   TextInput,
@@ -231,22 +231,45 @@ export default function NewTaskScreen() {
             <Text variant="bodyMedium" style={styles.label}>
               Due Date & Time
             </Text>
-            <Button
-              mode="outlined"
-              onPress={() => setShowDatePicker(true)}
-              style={styles.datetimeButton}
-              icon="calendar"
-              textColor="#6366f1"
-            >
-              {formatDateTime(selectedDateTime)}
-            </Button>
+            <View style={styles.datetimeButtonsRow}>
+              <Button
+                mode="outlined"
+                onPress={() => setShowDatePicker(true)}
+                style={[styles.datetimeButton, styles.dateButton]}
+                icon="calendar"
+                textColor="#6366f1"
+              >
+                {selectedDateTime.toLocaleDateString()}
+              </Button>
+              <Button
+                mode="outlined"
+                onPress={() => setShowTimePicker(true)}
+                style={[styles.datetimeButton, styles.timeButton]}
+                icon="clock-outline"
+                textColor="#6366f1"
+              >
+                {selectedDateTime.toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
+              </Button>
+            </View>
             {showDatePicker && (
               <DateTimePicker
                 value={selectedDateTime}
                 mode="date"
-                display="default"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
                 onChange={onDateChange}
                 minimumDate={new Date()}
+              />
+            )}
+            {showTimePicker && (
+              <DateTimePicker
+                value={selectedDateTime}
+                mode="time"
+                display={Platform.OS === "ios" ? "spinner" : "default"}
+                onChange={onTimeChange}
+                is24Hour={false}
               />
             )}
           </View>
@@ -376,9 +399,20 @@ const styles = StyleSheet.create({
   datetimeContainer: {
     marginBottom: 8,
   },
-  datetimeButton: {
+  datetimeButtonsRow: {
+    flexDirection: "row",
+    gap: 12,
     marginBottom: 8,
+  },
+  datetimeButton: {
     borderColor: "#6366f1",
+    flex: 1,
+  },
+  dateButton: {
+    flex: 1,
+  },
+  timeButton: {
+    flex: 1,
   },
   errorText: {
     color: "#ef4444",
