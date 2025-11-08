@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
+import { View, StyleSheet, ScrollView, Alert } from "react-native";
 import {
   Button,
   TextInput,
@@ -7,6 +7,7 @@ import {
   Title,
   Surface,
   Text,
+  Chip,
 } from "react-native-paper";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -14,6 +15,9 @@ import { z } from "zod";
 import { useRouter } from "expo-router";
 import { useTaskStore } from "../lib/store";
 import DateTimePicker from "@react-native-community/datetimepicker";
+import * as ImagePicker from "expo-image-picker";
+import * as DocumentPicker from "expo-document-picker";
+import { Attachment } from "../lib/types";
 
 const taskSchema = z.object({
   title: z
@@ -43,6 +47,7 @@ export default function NewTaskScreen() {
   const { addTask } = useTaskStore();
   const [showDatePicker, setShowDatePicker] = React.useState(false);
   const [showTimePicker, setShowTimePicker] = React.useState(false);
+  const [attachments, setAttachments] = React.useState<Attachment[]>([]);
 
   const {
     control,
@@ -69,8 +74,63 @@ export default function NewTaskScreen() {
       description: data.description || "",
       datetime: data.datetime.toISOString(),
       location: data.location,
+      attachments: attachments.length > 0 ? attachments : undefined,
     });
     router.back();
+  };
+
+  const pickImage = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== "granted") {
+        Alert.alert("Permission needed", "We need access to your photos to attach images.");
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: true,
+        quality: 0.8,
+      });
+
+      if (!result.canceled && result.assets) {
+        const newAttachments: Attachment[] = result.assets.map((asset) => ({
+          uri: asset.uri,
+          name: asset.fileName || `image_${Date.now()}.jpg`,
+          type: asset.mimeType || "image/jpeg",
+          size: asset.fileSize,
+        }));
+        setAttachments((prev) => [...prev, ...newAttachments]);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to pick image");
+    }
+  };
+
+  const pickDocument = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "*/*",
+        multiple: true,
+        copyToCacheDirectory: true,
+      });
+
+      if (!result.canceled && result.assets) {
+        const newAttachments: Attachment[] = result.assets.map((asset) => ({
+          uri: asset.uri,
+          name: asset.name,
+          type: asset.mimeType || "application/octet-stream",
+          size: asset.size,
+        }));
+        setAttachments((prev) => [...prev, ...newAttachments]);
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to pick document");
+    }
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
   const onDateChange = (event: any, selectedDate?: Date) => {
@@ -220,6 +280,46 @@ export default function NewTaskScreen() {
             </Text>
           )}
 
+          <View style={styles.attachmentsSection}>
+            <Text variant="titleMedium" style={styles.label}>
+              Attachments
+            </Text>
+            <View style={styles.attachmentButtons}>
+              <Button
+                mode="outlined"
+                onPress={pickImage}
+                style={styles.attachmentButton}
+                icon="image"
+                textColor="#6366f1"
+              >
+                Add Images
+              </Button>
+              <Button
+                mode="outlined"
+                onPress={pickDocument}
+                style={styles.attachmentButton}
+                icon="file-document"
+                textColor="#6366f1"
+              >
+                Add Files
+              </Button>
+            </View>
+            {attachments.length > 0 && (
+              <View style={styles.attachmentsList}>
+                {attachments.map((attachment, index) => (
+                  <Chip
+                    key={index}
+                    style={styles.attachmentChip}
+                    onClose={() => removeAttachment(index)}
+                    icon={attachment.type.startsWith("image/") ? "image" : "file"}
+                  >
+                    {attachment.name}
+                  </Chip>
+                ))}
+              </View>
+            )}
+          </View>
+
           <View style={styles.buttonContainer}>
             <Button
               mode="outlined"
@@ -296,5 +396,25 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: 6,
     borderRadius: 12,
+  },
+  attachmentsSection: {
+    marginBottom: 16,
+  },
+  attachmentButtons: {
+    flexDirection: "row",
+    gap: 12,
+    marginBottom: 12,
+  },
+  attachmentButton: {
+    flex: 1,
+    borderColor: "#6366f1",
+  },
+  attachmentsList: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  attachmentChip: {
+    marginBottom: 4,
   },
 });

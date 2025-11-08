@@ -182,6 +182,14 @@ const TaskCard = ({ task }: { task: Task }) => {
               </Text>
             </View>
           </View>
+          {task.attachments && task.attachments.length > 0 && (
+            <View style={styles.attachmentsBadge}>
+              <Text variant="bodySmall" style={styles.attachmentsText}>
+                📎 {task.attachments.length} attachment
+                {task.attachments.length !== 1 ? "s" : ""}
+              </Text>
+            </View>
+          )}
         </Card.Content>
       </Card>
     </Surface>
@@ -376,6 +384,16 @@ const styles = StyleSheet.create({
   },
   metaValue: {
     color: "#374151",
+    fontWeight: "500",
+  },
+  attachmentsBadge: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#e5e7eb",
+  },
+  attachmentsText: {
+    color: "#6366f1",
     fontWeight: "500",
   },
   fab: {

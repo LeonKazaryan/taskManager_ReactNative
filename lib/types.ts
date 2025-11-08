@@ -1,5 +1,12 @@
 export type TaskStatus = 'todo' | 'in_progress' | 'completed' | 'cancelled';
 
+export type Attachment = {
+    uri: string;
+    name: string;
+    type: string; // mime type
+    size?: number;
+}
+
 export type Task = {
     id: string;
     title: string;
@@ -7,6 +14,7 @@ export type Task = {
     datetime: string;
     location: string;
     status: TaskStatus;
+    attachments?: Attachment[];
     createdAt: string;
 }
 

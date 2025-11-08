@@ -1,5 +1,5 @@
 import React from "react";
-import { View, StyleSheet, ScrollView, Alert } from "react-native";
+import { View, StyleSheet, ScrollView, Alert, Linking } from "react-native";
 import {
   Card,
   Title,
@@ -10,6 +10,7 @@ import {
   Surface,
   Text,
   Divider,
+  List,
 } from "react-native-paper";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useTaskStore } from "../../lib/store";
@@ -181,6 +182,52 @@ export default function TaskDetailsScreen() {
             </Text>
           </View>
 
+          {task.attachments && task.attachments.length > 0 && (
+            <>
+              <Divider style={styles.divider} />
+              <View style={styles.section}>
+                <Text variant="titleMedium" style={styles.sectionTitle}>
+                  Attachments ({task.attachments.length})
+                </Text>
+                {task.attachments.map((attachment, index) => (
+                  <List.Item
+                    key={index}
+                    title={attachment.name}
+                    description={attachment.type}
+                    left={(props) => (
+                      <List.Icon
+                        {...props}
+                        icon={
+                          attachment.type.startsWith("image/")
+                            ? "image"
+                            : "file"
+                        }
+                        color="#6366f1"
+                      />
+                    )}
+                    right={(props) => (
+                      <Button
+                        {...props}
+                        mode="text"
+                        compact
+                        onPress={() => {
+                          Linking.openURL(attachment.uri).catch(() => {
+                            Alert.alert("Error", "Could not open file");
+                          });
+                        }}
+                        icon="open-in-new"
+                        textColor="#6366f1"
+                      >
+                        Open
+                      </Button>
+                    )}
+                    style={styles.attachmentItem}
+                  />
+                ))}
+              </View>
+            </>
+          )}
+
           <View style={styles.actions}>
             <Menu
               key={menuKey}
@@ -299,5 +346,11 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     borderColor: "#ef4444",
+  },
+  attachmentItem: {
+    paddingVertical: 8,
+    backgroundColor: "#f9fafb",
+    borderRadius: 8,
+    marginBottom: 8,
   },
 });
