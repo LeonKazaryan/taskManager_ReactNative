@@ -85,6 +85,15 @@ export default function RootLayout() {
               headerTitleStyle: { fontWeight: "700" },
             }}
           />
+          <Stack.Screen
+            name="history"
+            options={{
+              title: "History",
+              headerStyle: { backgroundColor: "#ffffff" },
+              headerTintColor: "#111827",
+              headerTitleStyle: { fontWeight: "700" },
+            }}
+          />
         </Stack>
       </PaperProvider>
     </SafeAreaProvider>

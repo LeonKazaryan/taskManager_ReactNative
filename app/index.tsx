@@ -254,10 +254,20 @@ export default function TaskListScreen() {
     <View style={styles.container}>
       <Surface style={styles.header} elevation={2}>
         <View style={styles.headerContent}>
-          <Text variant="headlineSmall" style={styles.headerTitle}>
+          {/* <Text variant="headlineSmall" style={styles.headerTitle}>
             Tasks
-          </Text>
+          </Text> */}
           <View style={styles.headerActions}>
+            <Button
+              mode="outlined"
+              onPress={() => router.push("/history")}
+              icon="history"
+              style={styles.mapButton}
+              textColor="#6366f1"
+              compact
+            >
+              History
+            </Button>
             <Button
               mode="outlined"
               onPress={() => router.push("/map")}
@@ -332,7 +342,8 @@ const styles = StyleSheet.create({
   },
   headerContent: {
     flexDirection: "row",
-    justifyContent: "space-between",
+
+    justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 20,
     paddingVertical: 16,
@@ -344,13 +355,14 @@ const styles = StyleSheet.create({
   headerActions: {
     flexDirection: "row",
     gap: 8,
-    alignItems: "center",
   },
   mapButton: {
     borderColor: "#6366f1",
   },
   sortButton: {
     borderColor: "#6366f1",
+    // marginLeft: 10,
+    alignSelf: "flex-end",
   },
   list: {
     padding: 16,
