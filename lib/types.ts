@@ -7,12 +7,18 @@ export type Attachment = {
     size?: number;
 }
 
+export type LocationCoordinates = {
+    latitude: number;
+    longitude: number;
+}
+
 export type Task = {
     id: string;
     title: string;
     description?: string;
     datetime: string;
     location: string;
+    coordinates?: LocationCoordinates;
     status: TaskStatus;
     attachments?: Attachment[];
     createdAt: string;

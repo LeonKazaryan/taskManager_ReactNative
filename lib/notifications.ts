@@ -84,7 +84,10 @@ export async function scheduleTaskNotification(task: Task): Promise<string | nul
         data: { taskId: task.id },
         sound: true,
       },
-      trigger: notificationTime,
+      trigger: {
+        type: "date",
+        date: notificationTime,
+      },
     });
 
     console.log(`Scheduled notification for task ${task.id} at ${notificationTime.toISOString()}`);

@@ -17,7 +17,8 @@ import { useTaskStore } from "../lib/store";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import * as ImagePicker from "expo-image-picker";
 import * as DocumentPicker from "expo-document-picker";
-import { Attachment } from "../lib/types";
+import { Attachment, LocationCoordinates } from "../lib/types";
+import LocationPicker from "../components/LocationPicker";
 
 const taskSchema = z.object({
   title: z
@@ -48,6 +49,10 @@ export default function NewTaskScreen() {
   const [showDatePicker, setShowDatePicker] = React.useState(false);
   const [showTimePicker, setShowTimePicker] = React.useState(false);
   const [attachments, setAttachments] = React.useState<Attachment[]>([]);
+  const [showLocationPicker, setShowLocationPicker] = React.useState(false);
+  const [locationCoordinates, setLocationCoordinates] = React.useState<
+    LocationCoordinates | undefined
+  >(undefined);
 
   const {
     control,
@@ -74,16 +79,29 @@ export default function NewTaskScreen() {
       description: data.description || "",
       datetime: data.datetime.toISOString(),
       location: data.location,
+      coordinates: locationCoordinates,
       attachments: attachments.length > 0 ? attachments : undefined,
     });
     router.back();
   };
 
+  const handleLocationSelect = (
+    location: string,
+    coordinates: LocationCoordinates
+  ) => {
+    setValue("location", location, { shouldValidate: true });
+    setLocationCoordinates(coordinates);
+  };
+
   const pickImage = async () => {
     try {
-      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      const { status } =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (status !== "granted") {
-        Alert.alert("Permission needed", "We need access to your photos to attach images.");
+        Alert.alert(
+          "Permission needed",
+          "We need access to your photos to attach images."
+        );
         return;
       }
 
@@ -279,29 +297,47 @@ export default function NewTaskScreen() {
             </Text>
           )}
 
-          <Controller
-            control={control}
-            name="location"
-            render={({ field: { onChange, onBlur, value } }) => (
-              <TextInput
-                label="Location"
-                value={value}
-                onBlur={onBlur}
-                onChangeText={onChange}
-                error={!!errors.location}
-                style={styles.input}
-                mode="outlined"
-                placeholder="Enter location manually"
-                outlineColor="#e5e7eb"
-                activeOutlineColor="#6366f1"
-              />
-            )}
-          />
+          <View style={styles.locationSection}>
+            <Controller
+              control={control}
+              name="location"
+              render={({ field: { onChange, onBlur, value } }) => (
+                <TextInput
+                  label="Location"
+                  value={value}
+                  onBlur={onBlur}
+                  onChangeText={onChange}
+                  error={!!errors.location}
+                  style={styles.input}
+                  mode="outlined"
+                  placeholder="Enter location manually or select on map"
+                  outlineColor="#e5e7eb"
+                  activeOutlineColor="#6366f1"
+                />
+              )}
+            />
+            <Button
+              mode="outlined"
+              onPress={() => setShowLocationPicker(true)}
+              style={styles.mapLocationButton}
+              icon="map-marker"
+              textColor="#6366f1"
+            >
+              Select on Map
+            </Button>
+          </View>
           {errors.location && (
             <Text variant="bodySmall" style={styles.errorText}>
               {errors.location.message}
             </Text>
           )}
+
+          <LocationPicker
+            visible={showLocationPicker}
+            onClose={() => setShowLocationPicker(false)}
+            onSelect={handleLocationSelect}
+            initialCoordinates={locationCoordinates}
+          />
 
           <View style={styles.attachmentsSection}>
             <Text variant="titleMedium" style={styles.label}>
@@ -334,7 +370,9 @@ export default function NewTaskScreen() {
                     key={index}
                     style={styles.attachmentChip}
                     onClose={() => removeAttachment(index)}
-                    icon={attachment.type.startsWith("image/") ? "image" : "file"}
+                    icon={
+                      attachment.type.startsWith("image/") ? "image" : "file"
+                    }
                   >
                     {attachment.name}
                   </Chip>
@@ -413,6 +451,13 @@ const styles = StyleSheet.create({
   },
   timeButton: {
     flex: 1,
+  },
+  locationSection: {
+    marginBottom: 8,
+  },
+  mapLocationButton: {
+    marginTop: 8,
+    borderColor: "#6366f1",
   },
   errorText: {
     color: "#ef4444",

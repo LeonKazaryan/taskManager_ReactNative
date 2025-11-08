@@ -257,30 +257,42 @@ export default function TaskListScreen() {
           <Text variant="headlineSmall" style={styles.headerTitle}>
             Tasks
           </Text>
-          <Menu
-            key={menuKey}
-            visible={sortMenuVisible}
-            onDismiss={() => setSortMenuVisible(false)}
-            anchor={
-              <Button
-                mode="outlined"
-                onPress={openSortMenu}
-                icon="sort"
-                style={styles.sortButton}
-                textColor="#6366f1"
-              >
-                {currentSortLabel}
-              </Button>
-            }
-          >
-            {sortOptions.map((option) => (
-              <Menu.Item
-                key={option.key}
-                onPress={() => handleSortChange(option.key)}
-                title={option.label}
-              />
-            ))}
-          </Menu>
+          <View style={styles.headerActions}>
+            <Button
+              mode="outlined"
+              onPress={() => router.push("/map")}
+              icon="map"
+              style={styles.mapButton}
+              textColor="#6366f1"
+              compact
+            >
+              Map
+            </Button>
+            <Menu
+              key={menuKey}
+              visible={sortMenuVisible}
+              onDismiss={() => setSortMenuVisible(false)}
+              anchor={
+                <Button
+                  mode="outlined"
+                  onPress={openSortMenu}
+                  icon="sort"
+                  style={styles.sortButton}
+                  textColor="#6366f1"
+                >
+                  {currentSortLabel}
+                </Button>
+              }
+            >
+              {sortOptions.map((option) => (
+                <Menu.Item
+                  key={option.key}
+                  onPress={() => handleSortChange(option.key)}
+                  title={option.label}
+                />
+              ))}
+            </Menu>
+          </View>
         </View>
       </Surface>
 
@@ -328,6 +340,14 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontWeight: "700",
     color: "#111827",
+  },
+  headerActions: {
+    flexDirection: "row",
+    gap: 8,
+    alignItems: "center",
+  },
+  mapButton: {
+    borderColor: "#6366f1",
   },
   sortButton: {
     borderColor: "#6366f1",
