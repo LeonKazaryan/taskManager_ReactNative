@@ -22,9 +22,12 @@ import {
   Divider,
   List,
   IconButton,
+  useTheme,
 } from "react-native-paper";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useTaskStore } from "../../lib/store";
+import { useThemeStore } from "../../lib/themeStore";
+import { lightStatusColors, darkStatusColors } from "../../lib/theme";
 import { TaskStatus } from "../../lib/types";
 import * as Sharing from "expo-sharing";
 import * as FileSystem from "expo-file-system/legacy";
@@ -32,42 +35,22 @@ import * as IntentLauncher from "expo-intent-launcher";
 import { Platform } from "react-native";
 
 const StatusChip = ({ status }: { status: TaskStatus }) => {
-  const getStatusConfig = (status: TaskStatus) => {
-    switch (status) {
-      case "todo":
-        return {
-          color: "#6366f1",
-          backgroundColor: "#eef2ff",
-          label: "To Do",
-        };
-      case "in_progress":
-        return {
-          color: "#f59e0b",
-          backgroundColor: "#fef3c7",
-          label: "In Progress",
-        };
-      case "completed":
-        return {
-          color: "#10b981",
-          backgroundColor: "#d1fae5",
-          label: "Completed",
-        };
-      case "cancelled":
-        return {
-          color: "#ef4444",
-          backgroundColor: "#fee2e2",
-          label: "Cancelled",
-        };
-      default:
-        return {
-          color: "#6b7280",
-          backgroundColor: "#f3f4f6",
-          label: status,
-        };
-    }
+  const { themeMode } = useThemeStore();
+  const statusColors =
+    themeMode === "dark" ? darkStatusColors : lightStatusColors;
+  const config = statusColors[status] || {
+    color: themeMode === "dark" ? "#9ca3af" : "#6b7280",
+    backgroundColor: themeMode === "dark" ? "#374151" : "#f3f4f6",
   };
 
-  const config = getStatusConfig(status);
+  const labels: Record<TaskStatus, string> = {
+    todo: "To Do",
+    in_progress: "In Progress",
+    completed: "Completed",
+    cancelled: "Cancelled",
+  };
+
+  const label = labels[status] || status;
 
   return (
     <Chip
@@ -82,13 +65,14 @@ const StatusChip = ({ status }: { status: TaskStatus }) => {
         fontSize: 14,
       }}
     >
-      {config.label}
+      {label}
     </Chip>
   );
 };
 
 export default function TaskDetailsScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const { tasks, deleteTask, setStatus } = useTaskStore();
   const [menuVisible, setMenuVisible] = React.useState(false);
@@ -232,11 +216,20 @@ export default function TaskDetailsScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <Surface style={styles.card} elevation={1}>
+    <ScrollView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      showsVerticalScrollIndicator={false}
+    >
+      <Surface
+        style={[styles.card, { backgroundColor: theme.colors.surface }]}
+        elevation={1}
+      >
         <View style={styles.content}>
           <View style={styles.header}>
-            <Text variant="headlineSmall" style={styles.title}>
+            <Text
+              variant="headlineSmall"
+              style={[styles.title, { color: theme.colors.onSurface }]}
+            >
               {task.title}
             </Text>
             <StatusChip status={task.status} />
@@ -244,44 +237,71 @@ export default function TaskDetailsScreen() {
 
           {task.description && (
             <View style={styles.section}>
-              <Text variant="titleMedium" style={styles.sectionTitle}>
+              <Text
+                variant="titleMedium"
+                style={[styles.sectionTitle, { color: theme.colors.onSurface }]}
+              >
                 Description
               </Text>
-              <Text variant="bodyLarge" style={styles.description}>
+              <Text
+                variant="bodyLarge"
+                style={[
+                  styles.description,
+                  { color: theme.colors.onSurfaceVariant },
+                ]}
+              >
                 {task.description}
               </Text>
             </View>
           )}
 
-          <Divider style={styles.divider} />
+          <Divider style={{ backgroundColor: theme.colors.outline }} />
 
           <View style={styles.section}>
-            <Text variant="titleMedium" style={styles.sectionTitle}>
+            <Text
+              variant="titleMedium"
+              style={[styles.sectionTitle, { color: theme.colors.onSurface }]}
+            >
               Due Date & Time
             </Text>
-            <Text variant="bodyLarge" style={styles.info}>
+            <Text
+              variant="bodyLarge"
+              style={[styles.info, { color: theme.colors.onSurface }]}
+            >
               {formatDateTime(task.datetime)}
             </Text>
           </View>
 
-          <Divider style={styles.divider} />
+          <Divider style={{ backgroundColor: theme.colors.outline }} />
 
           <View style={styles.section}>
-            <Text variant="titleMedium" style={styles.sectionTitle}>
+            <Text
+              variant="titleMedium"
+              style={[styles.sectionTitle, { color: theme.colors.onSurface }]}
+            >
               Location
             </Text>
-            <Text variant="bodyLarge" style={styles.info}>
+            <Text
+              variant="bodyLarge"
+              style={[styles.info, { color: theme.colors.onSurface }]}
+            >
               {task.location}
             </Text>
           </View>
 
-          <Divider style={styles.divider} />
+          <Divider style={{ backgroundColor: theme.colors.outline }} />
 
           <View style={styles.section}>
-            <Text variant="titleMedium" style={styles.sectionTitle}>
+            <Text
+              variant="titleMedium"
+              style={[styles.sectionTitle, { color: theme.colors.onSurface }]}
+            >
               Created
             </Text>
-            <Text variant="bodyLarge" style={styles.info}>
+            <Text
+              variant="bodyLarge"
+              style={[styles.info, { color: theme.colors.onSurface }]}
+            >
               {formatDateTime(task.createdAt)}
             </Text>
           </View>
@@ -306,7 +326,7 @@ export default function TaskDetailsScreen() {
                             ? "image"
                             : "file"
                         }
-                        color="#6366f1"
+                        color={theme.colors.primary}
                       />
                     )}
                     right={(props) => (
@@ -320,12 +340,15 @@ export default function TaskDetailsScreen() {
                             ? "eye"
                             : "open-in-new"
                         }
-                        textColor="#6366f1"
+                        textColor={theme.colors.primary}
                       >
                         {attachment.type.startsWith("image/") ? "View" : "Open"}
                       </Button>
                     )}
-                    style={styles.attachmentItem}
+                    style={[
+                      styles.attachmentItem,
+                      { backgroundColor: theme.colors.surfaceVariant },
+                    ]}
                   />
                 ))}
               </View>
@@ -341,9 +364,12 @@ export default function TaskDetailsScreen() {
                 <Button
                   mode="outlined"
                   onPress={() => setMenuVisible(true)}
-                  style={styles.actionButton}
+                  style={[
+                    styles.actionButton,
+                    { borderColor: theme.colors.primary },
+                  ]}
                   icon="update"
-                  textColor="#6366f1"
+                  textColor={theme.colors.primary}
                 >
                   Change Status
                 </Button>
@@ -370,9 +396,12 @@ export default function TaskDetailsScreen() {
             <Button
               mode="outlined"
               onPress={() => router.push(`/edit/${task.id}`)}
-              style={styles.actionButton}
+              style={[
+                styles.actionButton,
+                { borderColor: theme.colors.primary },
+              ]}
               icon="pencil"
-              textColor="#6366f1"
+              textColor={theme.colors.primary}
             >
               Edit Task
             </Button>
@@ -380,9 +409,13 @@ export default function TaskDetailsScreen() {
             <Button
               mode="outlined"
               onPress={handleDelete}
-              style={[styles.actionButton, styles.deleteButton]}
+              style={[
+                styles.actionButton,
+                styles.deleteButton,
+                { borderColor: theme.colors.error },
+              ]}
               icon="delete"
-              textColor="#ef4444"
+              textColor={theme.colors.error}
             >
               Delete Task
             </Button>
@@ -428,12 +461,10 @@ export default function TaskDetailsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fafafa",
   },
   card: {
     margin: 16,
     borderRadius: 16,
-    backgroundColor: "#ffffff",
   },
   content: {
     padding: 24,
@@ -448,7 +479,6 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 16,
     fontWeight: "700",
-    color: "#111827",
     lineHeight: 32,
   },
   section: {
@@ -456,21 +486,17 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontWeight: "600",
-    color: "#374151",
     marginBottom: 8,
   },
   description: {
-    color: "#6b7280",
     lineHeight: 24,
   },
   info: {
-    color: "#111827",
     fontWeight: "500",
     lineHeight: 24,
   },
   divider: {
     marginVertical: 16,
-    backgroundColor: "#e5e7eb",
   },
   actions: {
     marginTop: 24,
@@ -478,16 +504,14 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     borderRadius: 12,
-    borderColor: "#6366f1",
   },
   deleteButton: {
-    borderColor: "#ef4444",
+    // borderColor will be set dynamically
   },
   attachmentItem: {
-    paddingVertical: 8,
-    backgroundColor: "#f9fafb",
+    paddingVertical: 3,
     borderRadius: 8,
-    marginBottom: 8,
+    marginBottom: 5,
   },
   imageModalContainer: {
     flex: 1,

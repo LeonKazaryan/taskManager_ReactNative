@@ -8,6 +8,7 @@ import {
   Surface,
   Text,
   Chip,
+  useTheme,
 } from "react-native-paper";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -45,6 +46,7 @@ type TaskFormData = z.infer<typeof taskSchema>;
 
 export default function NewTaskScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const { addTask } = useTaskStore();
   const [showDatePicker, setShowDatePicker] = React.useState(false);
   const [showTimePicker, setShowTimePicker] = React.useState(false);
@@ -190,10 +192,19 @@ export default function NewTaskScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <Surface style={styles.card} elevation={1}>
+    <ScrollView
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+      showsVerticalScrollIndicator={false}
+    >
+      <Surface
+        style={[styles.card, { backgroundColor: theme.colors.surface }]}
+        elevation={1}
+      >
         <View style={styles.content}>
-          <Text variant="headlineSmall" style={styles.title}>
+          <Text
+            variant="headlineSmall"
+            style={[styles.title, { color: theme.colors.onSurface }]}
+          >
             Create New Task
           </Text>
 
@@ -209,8 +220,8 @@ export default function NewTaskScreen() {
                 error={!!errors.title}
                 style={styles.input}
                 mode="outlined"
-                outlineColor="#e5e7eb"
-                activeOutlineColor="#6366f1"
+                outlineColor={theme.colors.outline}
+                activeOutlineColor={theme.colors.primary}
               />
             )}
           />
@@ -234,8 +245,8 @@ export default function NewTaskScreen() {
                 mode="outlined"
                 multiline
                 numberOfLines={3}
-                outlineColor="#e5e7eb"
-                activeOutlineColor="#6366f1"
+                outlineColor={theme.colors.outline}
+                activeOutlineColor={theme.colors.primary}
               />
             )}
           />
@@ -246,25 +257,36 @@ export default function NewTaskScreen() {
           )}
 
           <View style={styles.datetimeContainer}>
-            <Text variant="bodyMedium" style={styles.label}>
+            <Text
+              variant="bodyMedium"
+              style={[styles.label, { color: theme.colors.onSurface }]}
+            >
               Due Date & Time
             </Text>
             <View style={styles.datetimeButtonsRow}>
               <Button
                 mode="outlined"
                 onPress={() => setShowDatePicker(true)}
-                style={[styles.datetimeButton, styles.dateButton]}
+                style={[
+                  styles.datetimeButton,
+                  styles.dateButton,
+                  { borderColor: theme.colors.primary },
+                ]}
                 icon="calendar"
-                textColor="#6366f1"
+                textColor={theme.colors.primary}
               >
                 {selectedDateTime.toLocaleDateString()}
               </Button>
               <Button
                 mode="outlined"
                 onPress={() => setShowTimePicker(true)}
-                style={[styles.datetimeButton, styles.timeButton]}
+                style={[
+                  styles.datetimeButton,
+                  styles.timeButton,
+                  { borderColor: theme.colors.primary },
+                ]}
                 icon="clock-outline"
-                textColor="#6366f1"
+                textColor={theme.colors.primary}
               >
                 {selectedDateTime.toLocaleTimeString([], {
                   hour: "2-digit",
@@ -311,17 +333,20 @@ export default function NewTaskScreen() {
                   style={styles.input}
                   mode="outlined"
                   placeholder="Enter location manually or select on map"
-                  outlineColor="#e5e7eb"
-                  activeOutlineColor="#6366f1"
+                  outlineColor={theme.colors.outline}
+                  activeOutlineColor={theme.colors.primary}
                 />
               )}
             />
             <Button
               mode="outlined"
               onPress={() => setShowLocationPicker(true)}
-              style={styles.mapLocationButton}
+              style={[
+                styles.mapLocationButton,
+                { borderColor: theme.colors.primary },
+              ]}
               icon="map-marker"
-              textColor="#6366f1"
+              textColor={theme.colors.primary}
             >
               Select on Map
             </Button>
@@ -340,25 +365,34 @@ export default function NewTaskScreen() {
           />
 
           <View style={styles.attachmentsSection}>
-            <Text variant="titleMedium" style={styles.label}>
+            <Text
+              variant="titleMedium"
+              style={[styles.label, { color: theme.colors.onSurface }]}
+            >
               Attachments
             </Text>
             <View style={styles.attachmentButtons}>
               <Button
                 mode="outlined"
                 onPress={pickImage}
-                style={styles.attachmentButton}
+                style={[
+                  styles.attachmentButton,
+                  { borderColor: theme.colors.primary },
+                ]}
                 icon="image"
-                textColor="#6366f1"
+                textColor={theme.colors.primary}
               >
                 Add Images
               </Button>
               <Button
                 mode="outlined"
                 onPress={pickDocument}
-                style={styles.attachmentButton}
+                style={[
+                  styles.attachmentButton,
+                  { borderColor: theme.colors.primary },
+                ]}
                 icon="file-document"
-                textColor="#6366f1"
+                textColor={theme.colors.primary}
               >
                 Add Files
               </Button>
@@ -385,8 +419,8 @@ export default function NewTaskScreen() {
             <Button
               mode="outlined"
               onPress={() => router.back()}
-              style={styles.button}
-              textColor="#6b7280"
+              style={[styles.button, { borderColor: theme.colors.outline }]}
+              textColor={theme.colors.onSurfaceVariant}
             >
               Cancel
             </Button>
@@ -395,7 +429,7 @@ export default function NewTaskScreen() {
               onPress={handleSubmit(onSubmit)}
               disabled={!isValid}
               style={styles.button}
-              buttonColor="#6366f1"
+              buttonColor={theme.colors.primary}
             >
               Create Task
             </Button>
@@ -409,12 +443,10 @@ export default function NewTaskScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fafafa",
   },
   card: {
     margin: 16,
     borderRadius: 16,
-    backgroundColor: "#ffffff",
   },
   content: {
     padding: 24,
@@ -423,16 +455,13 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     textAlign: "center",
     fontWeight: "700",
-    color: "#111827",
   },
   input: {
     marginBottom: 8,
-    backgroundColor: "#ffffff",
   },
   label: {
     marginBottom: 8,
     fontWeight: "600",
-    color: "#374151",
   },
   datetimeContainer: {
     marginBottom: 8,
@@ -443,7 +472,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   datetimeButton: {
-    borderColor: "#6366f1",
     flex: 1,
   },
   dateButton: {
@@ -457,7 +485,6 @@ const styles = StyleSheet.create({
   },
   mapLocationButton: {
     marginTop: 8,
-    borderColor: "#6366f1",
   },
   errorText: {
     color: "#ef4444",
@@ -486,7 +513,6 @@ const styles = StyleSheet.create({
   },
   attachmentButton: {
     flex: 1,
-    borderColor: "#6366f1",
   },
   attachmentsList: {
     flexDirection: "row",

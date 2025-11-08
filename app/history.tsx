@@ -7,46 +7,54 @@ import {
   Divider,
   Chip,
   IconButton,
+  useTheme,
 } from "react-native-paper";
 import { useRouter } from "expo-router";
 import { useTaskStore } from "../lib/store";
+import { useThemeStore } from "../lib/themeStore";
+import { lightStatusColors, darkStatusColors } from "../lib/theme";
 import { ActionLog, ActionType } from "../lib/types";
 
-const getActionConfig = (actionType: ActionType) => {
+const getActionConfig = (
+  actionType: ActionType,
+  themeMode: "light" | "dark"
+) => {
+  const statusColors =
+    themeMode === "dark" ? darkStatusColors : lightStatusColors;
   switch (actionType) {
     case "created":
       return {
         icon: "plus-circle",
-        color: "#10b981",
-        backgroundColor: "#d1fae5",
+        color: statusColors.completed.color,
+        backgroundColor: statusColors.completed.backgroundColor,
         label: "Created",
       };
     case "updated":
       return {
         icon: "pencil",
-        color: "#6366f1",
-        backgroundColor: "#eef2ff",
+        color: statusColors.todo.color,
+        backgroundColor: statusColors.todo.backgroundColor,
         label: "Updated",
       };
     case "deleted":
       return {
         icon: "delete",
-        color: "#ef4444",
-        backgroundColor: "#fee2e2",
+        color: statusColors.cancelled.color,
+        backgroundColor: statusColors.cancelled.backgroundColor,
         label: "Deleted",
       };
     case "status_changed":
       return {
         icon: "update",
-        color: "#f59e0b",
-        backgroundColor: "#fef3c7",
+        color: statusColors.in_progress.color,
+        backgroundColor: statusColors.in_progress.backgroundColor,
         label: "Status Changed",
       };
     default:
       return {
         icon: "information",
-        color: "#6b7280",
-        backgroundColor: "#f3f4f6",
+        color: themeMode === "dark" ? "#9ca3af" : "#6b7280",
+        backgroundColor: themeMode === "dark" ? "#374151" : "#f3f4f6",
         label: actionType,
       };
   }
@@ -54,8 +62,10 @@ const getActionConfig = (actionType: ActionType) => {
 
 const ActionLogItem = ({ log }: { log: ActionLog }) => {
   const router = useRouter();
+  const theme = useTheme();
+  const { themeMode } = useThemeStore();
   const { tasks } = useTaskStore();
-  const config = getActionConfig(log.actionType);
+  const config = getActionConfig(log.actionType, themeMode);
   const task = tasks.find((t) => t.id === log.taskId);
 
   const formatTime = (timestamp: string) => {
@@ -91,10 +101,18 @@ const ActionLogItem = ({ log }: { log: ActionLog }) => {
   };
 
   return (
-    <Surface style={styles.logItem} elevation={1}>
+    <Surface
+      style={[styles.logItem, { backgroundColor: theme.colors.surface }]}
+      elevation={1}
+    >
       <View style={styles.logContent}>
         <View style={styles.logHeader}>
-          <View style={[styles.iconContainer, { backgroundColor: config.backgroundColor }]}>
+          <View
+            style={[
+              styles.iconContainer,
+              { backgroundColor: config.backgroundColor },
+            ]}
+          >
             <IconButton
               icon={config.icon}
               iconColor={config.color}
@@ -104,22 +122,47 @@ const ActionLogItem = ({ log }: { log: ActionLog }) => {
           </View>
           <View style={styles.logInfo}>
             <View style={styles.logTitleRow}>
-              <Text variant="titleSmall" style={styles.logTitle} numberOfLines={1}>
+              <Text
+                variant="titleSmall"
+                style={[styles.logTitle, { color: theme.colors.onSurface }]}
+                numberOfLines={1}
+              >
                 {log.taskTitle}
               </Text>
               <Chip
-                style={[styles.actionChip, { backgroundColor: config.backgroundColor }]}
-                textStyle={{ color: config.color, fontSize: 10, fontWeight: "600" }}
+                mode="flat"
+                style={[
+                  styles.actionChip,
+                  {
+                    backgroundColor: config.backgroundColor,
+                    borderWidth: 1,
+                    borderColor: config.color,
+                  },
+                ]}
+                textStyle={{
+                  color: config.color,
+                  fontSize: 11,
+                  fontWeight: "600",
+                }}
               >
                 {config.label}
               </Chip>
             </View>
             {log.details && (
-              <Text variant="bodySmall" style={styles.logDetails}>
+              <Text
+                variant="bodySmall"
+                style={[
+                  styles.logDetails,
+                  { color: theme.colors.onSurfaceVariant },
+                ]}
+              >
                 {log.details}
               </Text>
             )}
-            <Text variant="bodySmall" style={styles.logTime}>
+            <Text
+              variant="bodySmall"
+              style={[styles.logTime, { color: theme.colors.onSurfaceVariant }]}
+            >
               {formatTime(log.timestamp)} • {formatFullDate(log.timestamp)}
             </Text>
           </View>
@@ -129,7 +172,7 @@ const ActionLogItem = ({ log }: { log: ActionLog }) => {
             mode="text"
             compact
             onPress={() => router.push(`/task/${log.taskId}`)}
-            textColor="#6366f1"
+            textColor={theme.colors.primary}
             icon="arrow-right"
             style={styles.viewButton}
           >
@@ -142,14 +185,29 @@ const ActionLogItem = ({ log }: { log: ActionLog }) => {
 };
 
 const EmptyState = () => {
+  const theme = useTheme();
   return (
-    <View style={styles.emptyContainer}>
-      <Surface style={styles.emptyCard} elevation={1}>
+    <View
+      style={[
+        styles.emptyContainer,
+        { backgroundColor: theme.colors.background },
+      ]}
+    >
+      <Surface
+        style={[styles.emptyCard, { backgroundColor: theme.colors.surface }]}
+        elevation={1}
+      >
         <View style={styles.emptyContent}>
-          <Text variant="headlineSmall" style={styles.emptyTitle}>
+          <Text
+            variant="headlineSmall"
+            style={[styles.emptyTitle, { color: theme.colors.onSurface }]}
+          >
             No History Yet
           </Text>
-          <Text variant="bodyLarge" style={styles.emptyText}>
+          <Text
+            variant="bodyLarge"
+            style={[styles.emptyText, { color: theme.colors.onSurfaceVariant }]}
+          >
             Your task actions will appear here
           </Text>
         </View>
@@ -159,12 +217,13 @@ const EmptyState = () => {
 };
 
 export default function HistoryScreen() {
+  const theme = useTheme();
   const { getActionLogs, clearActionLogs } = useTaskStore();
   const logs = getActionLogs();
 
   const groupedLogs = useMemo(() => {
     const groups: { [key: string]: ActionLog[] } = {};
-    
+
     logs.forEach((log) => {
       const date = new Date(log.timestamp);
       const today = new Date();
@@ -217,10 +276,24 @@ export default function HistoryScreen() {
 
   if (logs.length === 0) {
     return (
-      <View style={styles.container}>
-        <Surface style={styles.header} elevation={2}>
+      <View
+        style={[styles.container, { backgroundColor: theme.colors.background }]}
+      >
+        <Surface
+          style={[
+            styles.header,
+            {
+              backgroundColor: theme.colors.surface,
+              borderBottomColor: theme.colors.outline,
+            },
+          ]}
+          elevation={2}
+        >
           <View style={styles.headerContent}>
-            <Text variant="headlineSmall" style={styles.headerTitle}>
+            <Text
+              variant="headlineSmall"
+              style={[styles.headerTitle, { color: theme.colors.onSurface }]}
+            >
               History
             </Text>
           </View>
@@ -231,16 +304,30 @@ export default function HistoryScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <Surface style={styles.header} elevation={2}>
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
+      <Surface
+        style={[
+          styles.header,
+          {
+            backgroundColor: theme.colors.surface,
+            borderBottomColor: theme.colors.outline,
+          },
+        ]}
+        elevation={2}
+      >
         <View style={styles.headerContent}>
-          <Text variant="headlineSmall" style={styles.headerTitle}>
+          <Text
+            variant="headlineSmall"
+            style={[styles.headerTitle, { color: theme.colors.onSurface }]}
+          >
             History ({logs.length})
           </Text>
           <Button
             mode="text"
             onPress={handleClearHistory}
-            textColor="#ef4444"
+            textColor={theme.colors.error}
             icon="delete-sweep"
             compact
           >
@@ -254,10 +341,13 @@ export default function HistoryScreen() {
         keyExtractor={(item) => item.date}
         renderItem={({ item }) => (
           <View style={styles.groupContainer}>
-            <Text variant="titleMedium" style={styles.groupTitle}>
+            <Text
+              variant="titleMedium"
+              style={[styles.groupTitle, { color: theme.colors.onSurface }]}
+            >
               {item.date}
             </Text>
-            <Divider style={styles.groupDivider} />
+            <Divider style={{ backgroundColor: theme.colors.outline }} />
             {item.logs.map((log) => (
               <ActionLogItem key={log.id} log={log} />
             ))}
@@ -273,12 +363,9 @@ export default function HistoryScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fafafa",
   },
   header: {
-    backgroundColor: "#ffffff",
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
   },
   headerContent: {
     flexDirection: "row",
@@ -289,7 +376,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontWeight: "700",
-    color: "#111827",
   },
   list: {
     padding: 16,
@@ -300,18 +386,15 @@ const styles = StyleSheet.create({
   },
   groupTitle: {
     fontWeight: "700",
-    color: "#111827",
     marginBottom: 8,
     paddingHorizontal: 4,
   },
   groupDivider: {
     marginBottom: 12,
-    backgroundColor: "#e5e7eb",
   },
   logItem: {
     marginBottom: 8,
     borderRadius: 12,
-    backgroundColor: "#ffffff",
     overflow: "hidden",
   },
   logContent: {
@@ -338,24 +421,23 @@ const styles = StyleSheet.create({
   logTitleRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 4,
+    marginBottom: 5,
     gap: 8,
   },
   logTitle: {
     flex: 1,
     fontWeight: "600",
-    color: "#111827",
   },
   actionChip: {
-    height: 20,
+    minHeight: 24,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
   },
   logDetails: {
-    color: "#6b7280",
     marginBottom: 4,
     fontSize: 12,
   },
   logTime: {
-    color: "#9ca3af",
     fontSize: 11,
   },
   viewButton: {
@@ -370,7 +452,6 @@ const styles = StyleSheet.create({
   },
   emptyCard: {
     borderRadius: 16,
-    backgroundColor: "#ffffff",
     width: "75%",
     maxWidth: 320,
   },
@@ -382,12 +463,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     textAlign: "center",
     fontWeight: "700",
-    color: "#111827",
   },
   emptyText: {
     textAlign: "center",
-    color: "#6b7280",
     lineHeight: 24,
   },
 });
-

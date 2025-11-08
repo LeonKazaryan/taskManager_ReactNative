@@ -48,6 +48,7 @@ export const useTaskStore = create<State>()(
                         state.actionLogs = state.actionLogs.slice(0, 500);
                     }
                     // Schedule notification for new task
+                    // newTask is already a plain object, so it's safe to pass directly
                     scheduleTaskNotification(newTask).catch(console.error);
                 }),
             updateTask: (id, updates) =>
@@ -74,7 +75,19 @@ export const useTaskStore = create<State>()(
                         // Reschedule notification if task was updated
                         const updatedTask = state.tasks.find(t => t.id === id);
                         if (updatedTask) {
-                            scheduleTaskNotification(updatedTask).catch(console.error);
+                            // Create a plain object from the Proxy to avoid "Proxy handler is null" error
+                            const plainTask = {
+                                id: updatedTask.id,
+                                title: updatedTask.title,
+                                description: updatedTask.description,
+                                datetime: updatedTask.datetime,
+                                location: updatedTask.location,
+                                coordinates: updatedTask.coordinates,
+                                attachments: updatedTask.attachments,
+                                createdAt: updatedTask.createdAt,
+                                status: updatedTask.status,
+                            };
+                            scheduleTaskNotification(plainTask).catch(console.error);
                         }
                     }
                 }),
@@ -128,7 +141,19 @@ export const useTaskStore = create<State>()(
                             cancelTaskNotification(id).catch(console.error);
                         } else {
                             // Reschedule notification if task becomes active again
-                            scheduleTaskNotification(task).catch(console.error);
+                            // Create a plain object from the Proxy to avoid "Proxy handler is null" error
+                            const plainTask = {
+                                id: task.id,
+                                title: task.title,
+                                description: task.description,
+                                datetime: task.datetime,
+                                location: task.location,
+                                coordinates: task.coordinates,
+                                attachments: task.attachments,
+                                createdAt: task.createdAt,
+                                status: task.status,
+                            };
+                            scheduleTaskNotification(plainTask).catch(console.error);
                         }
                     }
                 }),

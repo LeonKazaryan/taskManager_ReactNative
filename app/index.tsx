@@ -11,45 +11,37 @@ import {
   Text,
   Surface,
   Divider,
+  Switch,
+  useTheme,
 } from "react-native-paper";
 import { useRouter } from "expo-router";
 import { useTaskStore } from "../lib/store";
+import { useThemeStore } from "../lib/themeStore";
+import { lightStatusColors, darkStatusColors } from "../lib/theme";
 import { Task, TaskStatus } from "../lib/types";
 
 const StatusChip = ({ status }: { status: TaskStatus }) => {
+  const { themeMode } = useThemeStore();
+  const statusColors =
+    themeMode === "dark" ? darkStatusColors : lightStatusColors;
+
   const getStatusConfig = (status: TaskStatus) => {
-    switch (status) {
-      case "todo":
-        return {
-          color: "#6366f1",
-          backgroundColor: "#eef2ff",
-          label: "To Do",
-        };
-      case "in_progress":
-        return {
-          color: "#f59e0b",
-          backgroundColor: "#fef3c7",
-          label: "In Progress",
-        };
-      case "completed":
-        return {
-          color: "#10b981",
-          backgroundColor: "#d1fae5",
-          label: "Completed",
-        };
-      case "cancelled":
-        return {
-          color: "#ef4444",
-          backgroundColor: "#fee2e2",
-          label: "Cancelled",
-        };
-      default:
-        return {
-          color: "#6b7280",
-          backgroundColor: "#f3f4f6",
-          label: status,
-        };
-    }
+    const config = statusColors[status] || {
+      color: themeMode === "dark" ? "#9ca3af" : "#6b7280",
+      backgroundColor: themeMode === "dark" ? "#374151" : "#f3f4f6",
+    };
+
+    const labels: Record<TaskStatus, string> = {
+      todo: "To Do",
+      in_progress: "In Progress",
+      completed: "Completed",
+      cancelled: "Cancelled",
+    };
+
+    return {
+      ...config,
+      label: labels[status] || status,
+    };
   };
 
   const config = getStatusConfig(status);
@@ -74,6 +66,7 @@ const StatusChip = ({ status }: { status: TaskStatus }) => {
 
 const TaskCard = ({ task }: { task: Task }) => {
   const router = useRouter();
+  const theme = useTheme();
   const { setStatus } = useTaskStore();
   const [menuVisible, setMenuVisible] = React.useState(false);
   const [menuKey, setMenuKey] = React.useState(0);
@@ -96,7 +89,10 @@ const TaskCard = ({ task }: { task: Task }) => {
   };
 
   return (
-    <Surface style={styles.taskCard} elevation={1}>
+    <Surface
+      style={[styles.taskCard, { backgroundColor: theme.colors.surface }]}
+      elevation={1}
+    >
       <Card
         style={styles.card}
         onPress={() => router.push(`/task/${task.id}`)}
@@ -107,7 +103,7 @@ const TaskCard = ({ task }: { task: Task }) => {
             <View style={styles.titleContainer}>
               <Text
                 variant="titleMedium"
-                style={styles.taskTitle}
+                style={[styles.taskTitle, { color: theme.colors.onSurface }]}
                 numberOfLines={2}
               >
                 {task.title}
@@ -125,7 +121,7 @@ const TaskCard = ({ task }: { task: Task }) => {
                   compact
                   onPress={() => setMenuVisible(true)}
                   icon="chevron-down"
-                  textColor="#6b7280"
+                  textColor={theme.colors.onSurfaceVariant}
                 >
                   Change
                 </Button>
@@ -153,7 +149,10 @@ const TaskCard = ({ task }: { task: Task }) => {
           {task.description && (
             <Text
               variant="bodyMedium"
-              style={styles.description}
+              style={[
+                styles.description,
+                { color: theme.colors.onSurfaceVariant },
+              ]}
               numberOfLines={2}
             >
               {task.description}
@@ -162,20 +161,35 @@ const TaskCard = ({ task }: { task: Task }) => {
 
           <View style={styles.taskMeta}>
             <View style={styles.metaItem}>
-              <Text variant="bodySmall" style={styles.metaLabel}>
+              <Text
+                variant="bodySmall"
+                style={[
+                  styles.metaLabel,
+                  { color: theme.colors.onSurfaceVariant },
+                ]}
+              >
                 Due
               </Text>
-              <Text variant="bodySmall" style={styles.metaValue}>
+              <Text
+                variant="bodySmall"
+                style={[styles.metaValue, { color: theme.colors.onSurface }]}
+              >
                 {formatDateTime(task.datetime)}
               </Text>
             </View>
             <View style={styles.metaItem}>
-              <Text variant="bodySmall" style={styles.metaLabel}>
+              <Text
+                variant="bodySmall"
+                style={[
+                  styles.metaLabel,
+                  { color: theme.colors.onSurfaceVariant },
+                ]}
+              >
                 Location
               </Text>
               <Text
                 variant="bodySmall"
-                style={styles.metaValue}
+                style={[styles.metaValue, { color: theme.colors.onSurface }]}
                 numberOfLines={1}
               >
                 {task.location}
@@ -183,8 +197,19 @@ const TaskCard = ({ task }: { task: Task }) => {
             </View>
           </View>
           {task.attachments && task.attachments.length > 0 && (
-            <View style={styles.attachmentsBadge}>
-              <Text variant="bodySmall" style={styles.attachmentsText}>
+            <View
+              style={[
+                styles.attachmentsBadge,
+                { borderTopColor: theme.colors.outline },
+              ]}
+            >
+              <Text
+                variant="bodySmall"
+                style={[
+                  styles.attachmentsText,
+                  { color: theme.colors.primary },
+                ]}
+              >
                 📎 {task.attachments.length} attachment
                 {task.attachments.length !== 1 ? "s" : ""}
               </Text>
@@ -198,21 +223,39 @@ const TaskCard = ({ task }: { task: Task }) => {
 
 const EmptyState = () => {
   const router = useRouter();
+  const theme = useTheme();
 
   return (
-    <View style={styles.emptyContainer}>
-      <Surface style={styles.emptyCard} elevation={1}>
+    <View
+      style={[
+        styles.emptyContainer,
+        { backgroundColor: theme.colors.background },
+      ]}
+    >
+      <Surface
+        style={[styles.emptyCard, { backgroundColor: theme.colors.surface }]}
+        elevation={1}
+      >
         <View style={styles.emptyContent}>
-          <Text variant="headlineSmall" style={styles.emptyTitle}>
+          <Text
+            variant="headlineSmall"
+            style={[styles.emptyTitle, { color: theme.colors.onSurface }]}
+          >
             No tasks yet
           </Text>
-          <Text variant="bodyLarge" style={styles.emptyText}>
+          <Text
+            variant="bodyLarge"
+            style={[styles.emptyText, { color: theme.colors.onSurfaceVariant }]}
+          >
             Create your first task to get started
           </Text>
           <Button
             mode="contained"
             onPress={() => router.push("/new")}
-            style={styles.emptyButton}
+            style={[
+              styles.emptyButton,
+              { backgroundColor: theme.colors.primary },
+            ]}
             icon="plus"
           >
             Create Task
@@ -225,7 +268,9 @@ const EmptyState = () => {
 
 export default function TaskListScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const { getSortedTasks, setSortOrder, sortOrder } = useTaskStore();
+  const { themeMode, toggleTheme } = useThemeStore();
   const tasks = getSortedTasks();
   const [sortMenuVisible, setSortMenuVisible] = React.useState(false);
   const [menuKey, setMenuKey] = React.useState(0);
@@ -251,19 +296,27 @@ export default function TaskListScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Surface style={styles.header} elevation={2}>
+    <View
+      style={[styles.container, { backgroundColor: theme.colors.background }]}
+    >
+      <Surface
+        style={[
+          styles.header,
+          {
+            backgroundColor: theme.colors.surface,
+            borderBottomColor: theme.colors.outline,
+          },
+        ]}
+        elevation={2}
+      >
         <View style={styles.headerContent}>
-          {/* <Text variant="headlineSmall" style={styles.headerTitle}>
-            Tasks
-          </Text> */}
           <View style={styles.headerActions}>
             <Button
               mode="outlined"
               onPress={() => router.push("/history")}
               icon="history"
-              style={styles.mapButton}
-              textColor="#6366f1"
+              style={[styles.mapButton, { borderColor: theme.colors.primary }]}
+              textColor={theme.colors.primary}
               compact
             >
               History
@@ -272,8 +325,8 @@ export default function TaskListScreen() {
               mode="outlined"
               onPress={() => router.push("/map")}
               icon="map"
-              style={styles.mapButton}
-              textColor="#6366f1"
+              style={[styles.mapButton, { borderColor: theme.colors.primary }]}
+              textColor={theme.colors.primary}
               compact
             >
               Map
@@ -287,8 +340,11 @@ export default function TaskListScreen() {
                   mode="outlined"
                   onPress={openSortMenu}
                   icon="sort"
-                  style={styles.sortButton}
-                  textColor="#6366f1"
+                  style={[
+                    styles.sortButton,
+                    { borderColor: theme.colors.primary },
+                  ]}
+                  textColor={theme.colors.primary}
                 >
                   {currentSortLabel}
                 </Button>
@@ -302,6 +358,13 @@ export default function TaskListScreen() {
                 />
               ))}
             </Menu>
+            <View style={styles.themeToggle}>
+              <Switch
+                value={themeMode === "dark"}
+                onValueChange={toggleTheme}
+                color={theme.colors.primary}
+              />
+            </View>
           </View>
         </View>
       </Surface>
@@ -318,7 +381,7 @@ export default function TaskListScreen() {
             showsVerticalScrollIndicator={false}
           />
           <FAB
-            style={styles.fab}
+            style={[styles.fab, { backgroundColor: theme.colors.primary }]}
             icon="plus"
             onPress={() => router.push("/new")}
             label="New Task"
@@ -333,16 +396,12 @@ export default function TaskListScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fafafa",
   },
   header: {
-    backgroundColor: "#ffffff",
     borderBottomWidth: 1,
-    borderBottomColor: "#e5e7eb",
   },
   headerContent: {
     flexDirection: "row",
-
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 20,
@@ -350,19 +409,21 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontWeight: "700",
-    color: "#111827",
   },
   headerActions: {
     flexDirection: "row",
     gap: 8,
+    alignItems: "center",
   },
   mapButton: {
-    borderColor: "#6366f1",
+    // borderColor will be set dynamically
   },
   sortButton: {
-    borderColor: "#6366f1",
-    // marginLeft: 10,
+    // borderColor will be set dynamically
     alignSelf: "flex-end",
+  },
+  themeToggle: {
+    marginLeft: 8,
   },
   list: {
     padding: 16,
@@ -371,7 +432,7 @@ const styles = StyleSheet.create({
   taskCard: {
     marginBottom: 12,
     borderRadius: 12,
-    backgroundColor: "#ffffff",
+    // backgroundColor will be set dynamically
   },
   card: {
     backgroundColor: "transparent",
@@ -393,13 +454,13 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 12,
     fontWeight: "600",
-    color: "#111827",
     lineHeight: 22,
+    // color will be set dynamically
   },
   description: {
-    color: "#6b7280",
     lineHeight: 20,
     marginBottom: 16,
+    // color will be set dynamically
   },
   taskMeta: {
     flexDirection: "row",
@@ -410,43 +471,44 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   metaLabel: {
-    color: "#9ca3af",
     fontWeight: "500",
     marginBottom: 2,
+    // color will be set dynamically
   },
   metaValue: {
-    color: "#374151",
     fontWeight: "500",
+    // color will be set dynamically
   },
   attachmentsBadge: {
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: "#e5e7eb",
+    // borderTopColor will be set dynamically
   },
   attachmentsText: {
-    color: "#6366f1",
     fontWeight: "500",
+    // color will be set dynamically
   },
   fab: {
     position: "absolute",
     margin: 20,
     right: 0,
     bottom: 0,
-    backgroundColor: "#6366f1",
     borderRadius: 16,
+    // backgroundColor will be set dynamically
   },
   emptyContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
     padding: 12,
+    // backgroundColor will be set dynamically
   },
   emptyCard: {
     borderRadius: 16,
-    backgroundColor: "#ffffff",
     width: "75%",
     maxWidth: 320,
+    // backgroundColor will be set dynamically
   },
   emptyContent: {
     padding: 32,
@@ -456,17 +518,17 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     textAlign: "center",
     fontWeight: "700",
-    color: "#111827",
+    // color will be set dynamically
   },
   emptyText: {
     textAlign: "center",
-    color: "#6b7280",
     marginBottom: 24,
     lineHeight: 24,
+    // color will be set dynamically
   },
   emptyButton: {
-    backgroundColor: "#6366f1",
     borderRadius: 12,
     paddingHorizontal: 24,
+    // backgroundColor will be set dynamically
   },
 });

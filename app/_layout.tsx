@@ -1,30 +1,16 @@
 import { Stack } from "expo-router";
-import { PaperProvider, MD3LightTheme } from "react-native-paper";
+import { PaperProvider } from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useEffect } from "react";
 import { useTaskStore } from "../lib/store";
+import { useThemeStore } from "../lib/themeStore";
+import { lightTheme, darkTheme } from "../lib/theme";
 import { requestNotificationPermissions } from "../lib/notifications";
-
-const theme = {
-  ...MD3LightTheme,
-  colors: {
-    ...MD3LightTheme.colors,
-    primary: "#6366f1",
-    primaryContainer: "#eef2ff",
-    secondary: "#f59e0b",
-    secondaryContainer: "#fef3c7",
-    surface: "#ffffff",
-    surfaceVariant: "#f8fafc",
-    background: "#fafafa",
-    error: "#ef4444",
-    onSurface: "#111827",
-    onSurfaceVariant: "#6b7280",
-    outline: "#e5e7eb",
-  },
-};
 
 export default function RootLayout() {
   const { initializeNotifications } = useTaskStore();
+  const { themeMode } = useThemeStore();
+  const theme = themeMode === "dark" ? darkTheme : lightTheme;
 
   useEffect(() => {
     // Request notification permissions and initialize notifications on app start
@@ -41,58 +27,58 @@ export default function RootLayout() {
         <Stack>
           <Stack.Screen
             name="index"
-            options={{
+            options={() => ({
               title: "Tasks",
-              headerStyle: { backgroundColor: "#ffffff" },
-              headerTintColor: "#111827",
+              headerStyle: { backgroundColor: theme.colors.surface },
+              headerTintColor: theme.colors.onSurface,
               headerTitleStyle: { fontWeight: "700" },
-            }}
+            })}
           />
           <Stack.Screen
             name="new"
-            options={{
+            options={() => ({
               title: "New Task",
               presentation: "modal",
-              headerStyle: { backgroundColor: "#ffffff" },
-              headerTintColor: "#111827",
+              headerStyle: { backgroundColor: theme.colors.surface },
+              headerTintColor: theme.colors.onSurface,
               headerTitleStyle: { fontWeight: "700" },
-            }}
+            })}
           />
           <Stack.Screen
             name="task/[id]"
-            options={{
+            options={() => ({
               title: "Task Details",
-              headerStyle: { backgroundColor: "#ffffff" },
-              headerTintColor: "#111827",
+              headerStyle: { backgroundColor: theme.colors.surface },
+              headerTintColor: theme.colors.onSurface,
               headerTitleStyle: { fontWeight: "700" },
-            }}
+            })}
           />
           <Stack.Screen
             name="edit/[id]"
-            options={{
+            options={() => ({
               title: "Edit Task",
-              headerStyle: { backgroundColor: "#ffffff" },
-              headerTintColor: "#111827",
+              headerStyle: { backgroundColor: theme.colors.surface },
+              headerTintColor: theme.colors.onSurface,
               headerTitleStyle: { fontWeight: "700" },
-            }}
+            })}
           />
           <Stack.Screen
             name="map"
-            options={{
+            options={() => ({
               title: "Map",
-              headerStyle: { backgroundColor: "#ffffff" },
-              headerTintColor: "#111827",
+              headerStyle: { backgroundColor: theme.colors.surface },
+              headerTintColor: theme.colors.onSurface,
               headerTitleStyle: { fontWeight: "700" },
-            }}
+            })}
           />
           <Stack.Screen
             name="history"
-            options={{
+            options={() => ({
               title: "History",
-              headerStyle: { backgroundColor: "#ffffff" },
-              headerTintColor: "#111827",
+              headerStyle: { backgroundColor: theme.colors.surface },
+              headerTintColor: theme.colors.onSurface,
               headerTitleStyle: { fontWeight: "700" },
-            }}
+            })}
           />
         </Stack>
       </PaperProvider>
